@@ -26,6 +26,7 @@ fn main() {
 
     GGRSPlugin::<GgrsConfig>::new()
         .with_input_system(input)
+        .register_rollback_component::<Transform>()
         .build(&mut app);
 
     app.insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
@@ -38,7 +39,7 @@ fn main() {
             ..default()
         }))
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
-        .add_startup_systems((setup, spawn_player, start_matchbox_socket))
+        .add_startup_systems((setup, spawn_players, start_matchbox_socket))
         .add_systems((
             move_player.in_schedule(GGRSSchedule),
             wait_for_players.run_if(resource_exists::<MatchboxSocket<SingleChannel>>()),
@@ -52,12 +53,30 @@ fn setup(mut commands: Commands) {
     commands.spawn(camera_bundle);
 }
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
+    // Player 1
     commands.spawn((
         Player,
+        rip.next(),
         SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(-2., 0., 0.)),
             sprite: Sprite {
                 color: Color::rgb(0., 0.47, 1.),
+                custom_size: Some(Vec2::new(1., 1.)),
+                ..default()
+            },
+            ..default()
+        },
+    ));
+
+    // Player 2
+    commands.spawn((
+        Player,
+        rip.next(),
+        SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(2., 0., 0.)),
+            sprite: Sprite {
+                color: Color::rgb(0., 0.4, 0.),
                 custom_size: Some(Vec2::new(1., 1.)),
                 ..default()
             },
