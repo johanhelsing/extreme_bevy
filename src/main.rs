@@ -1,4 +1,10 @@
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
+use matchbox_socket::WebRtcSocket;
+
+#[derive(Resource)]
+struct Session {
+    socket: Option<WebRtcSocket>,
+}
 
 #[derive(Component)]
 struct Player;
@@ -14,8 +20,8 @@ fn main() {
             ..default()
         }))
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
-        .add_startup_systems((setup, spawn_player))
-        .add_system(move_player)
+        .add_startup_systems((setup, spawn_player, start_matchbox_socket))
+        .add_systems((move_player, wait_for_players))
         .run();
 }
 
@@ -37,6 +43,38 @@ fn spawn_player(mut commands: Commands) {
             ..default()
         },
     ));
+}
+
+fn start_matchbox_socket(mut commands: Commands) {
+    let room_url = "ws://127.0.0.1:3536/extreme_bevy?next=2";
+    info!("connecting to matchbox server: {:?}", room_url);
+    let (socket, message_loop) = WebRtcSocket::new_ggrs(room_url);
+
+    // The message loop needs to be awaited, or nothing will happen.
+    // We do this here using bevy's task system.
+    IoTaskPool::get().spawn(message_loop).detach();
+
+    commands.insert_resource(Session {
+        socket: Some(socket),
+    });
+}
+
+fn wait_for_players(mut session: ResMut<Session>) {
+    let Some(socket) = &mut session.socket else {
+        // If there is no socket we've already started the game
+        return;
+    };
+
+    // Check for new connections
+    socket.update_peers();
+    let players = socket.players();
+
+    let num_players = 2;
+    if players.len() < num_players {
+        return; // wait for more players
+    }
+
+    info!("All peers have joined, going in-game");
 }
 
 fn move_player(keys: Res<Input<KeyCode>>, mut player_query: Query<&mut Transform, With<Player>>) {
