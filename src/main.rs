@@ -31,9 +31,13 @@ fn main() {
             }),
             ..default()
         }))
-        .add_ggrs_plugin(GgrsPlugin::<GgrsConfig>::new().with_input_system(input))
+        .add_ggrs_plugin(
+            GgrsPlugin::<GgrsConfig>::new()
+                .with_input_system(input)
+                .register_rollback_component::<Transform>(),
+        )
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (setup, spawn_player, start_matchbox_socket))
+        .add_systems(Startup, (setup, spawn_players, start_matchbox_socket))
         .add_systems(Update, wait_for_players)
         .add_systems(GgrsSchedule, move_player)
         .run();
@@ -45,18 +49,38 @@ fn setup(mut commands: Commands) {
     commands.spawn(camera_bundle);
 }
 
-fn spawn_player(mut commands: Commands) {
-    commands.spawn((
-        Player,
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb(0., 0.47, 1.),
-                custom_size: Some(Vec2::new(1., 1.)),
+fn spawn_players(mut commands: Commands) {
+    // Player 1
+    commands
+        .spawn((
+            Player,
+            SpriteBundle {
+                transform: Transform::from_translation(Vec3::new(-2., 0., 0.)),
+                sprite: Sprite {
+                    color: Color::rgb(0., 0.47, 1.),
+                    custom_size: Some(Vec2::new(1., 1.)),
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        },
-    ));
+        ))
+        .add_rollback();
+
+    // Player 2
+    commands
+        .spawn((
+            Player,
+            SpriteBundle {
+                transform: Transform::from_translation(Vec3::new(2., 0., 0.)),
+                sprite: Sprite {
+                    color: Color::rgb(0., 0.4, 0.),
+                    custom_size: Some(Vec2::new(1., 1.)),
+                    ..default()
+                },
+                ..default()
+            },
+        ))
+        .add_rollback();
 }
 
 fn start_matchbox_socket(mut commands: Commands) {
