@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.6"
+ggrs = "0.8"
+bevy_ggrs = "0.1.3"
