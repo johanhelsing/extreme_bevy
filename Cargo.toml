@@ -7,3 +7,4 @@ edition = "2021"
 bevy = "0.8"
 ggrs = "0.9"
 bevy_ggrs = { version = "0.10", features = ["wasm-bindgen"] }
+matchbox_socket = { version = "0.4", features = ["ggrs-socket"] }
