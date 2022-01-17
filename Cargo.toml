@@ -8,3 +8,4 @@ opt-level = 2
 
 [dependencies]
 bevy = "0.14"
+bevy_ggrs = { version = "0.16", features = ["wasm-bindgen"] }
