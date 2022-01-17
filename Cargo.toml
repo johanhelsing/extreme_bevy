@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 bevy = "0.10"
 bevy_ggrs = { version = "0.12", features = ["wasm-bindgen"] }
+bevy_matchbox = { version = "0.6", features = ["ggrs"] }
