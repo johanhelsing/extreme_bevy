@@ -15,6 +15,12 @@ impl ggrs::Config for GgrsConfig {
     type Address = PeerId;
 }
 
+const INPUT_UP: u8 = 1 << 0;
+const INPUT_DOWN: u8 = 1 << 1;
+const INPUT_LEFT: u8 = 1 << 2;
+const INPUT_RIGHT: u8 = 1 << 3;
+const INPUT_FIRE: u8 = 1 << 4;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -25,9 +31,11 @@ fn main() {
             }),
             ..default()
         }))
+        .add_ggrs_plugin(GgrsPlugin::<GgrsConfig>::new().with_input_system(input))
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (setup, spawn_player, start_matchbox_socket))
-        .add_systems(Update, (move_player, wait_for_players))
+        .add_systems(Update, wait_for_players)
+        .add_systems(GgrsSchedule, move_player)
         .run();
 }
 
@@ -95,18 +103,46 @@ fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocket<Si
     commands.insert_resource(bevy_ggrs::Session::P2P(ggrs_session));
 }
 
-fn move_player(keys: Res<Input<KeyCode>>, mut players: Query<&mut Transform, With<Player>>) {
-    let mut direction = Vec2::ZERO;
+fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
+    let mut input = 0u8;
+
     if keys.any_pressed([KeyCode::Up, KeyCode::W]) {
-        direction.y += 1.;
+        input |= INPUT_UP;
     }
     if keys.any_pressed([KeyCode::Down, KeyCode::S]) {
-        direction.y -= 1.;
-    }
-    if keys.any_pressed([KeyCode::Right, KeyCode::D]) {
-        direction.x += 1.;
+        input |= INPUT_DOWN;
     }
     if keys.any_pressed([KeyCode::Left, KeyCode::A]) {
+        input |= INPUT_LEFT
+    }
+    if keys.any_pressed([KeyCode::Right, KeyCode::D]) {
+        input |= INPUT_RIGHT;
+    }
+    if keys.any_pressed([KeyCode::Space, KeyCode::Return]) {
+        input |= INPUT_FIRE;
+    }
+
+    input
+}
+
+fn move_player(
+    inputs: Res<PlayerInputs<GgrsConfig>>,
+    mut players: Query<&mut Transform, With<Player>>,
+) {
+    let mut direction = Vec2::ZERO;
+
+    let (input, _) = inputs[0];
+
+    if input & INPUT_UP != 0 {
+        direction.y += 1.;
+    }
+    if input & INPUT_DOWN != 0 {
+        direction.y -= 1.;
+    }
+    if input & INPUT_RIGHT != 0 {
+        direction.x += 1.;
+    }
+    if input & INPUT_LEFT != 0 {
         direction.x -= 1.;
     }
     if direction == Vec2::ZERO {
