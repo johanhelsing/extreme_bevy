@@ -32,8 +32,9 @@ fn main() {
             }),
             GgrsPlugin::<Config>::default(),
         ))
+        .rollback_component_with_clone::<Transform>()
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (setup, spawn_player, start_matchbox_socket))
+        .add_systems(Startup, (setup, spawn_players, start_matchbox_socket))
         .add_systems(Update, wait_for_players)
         .add_systems(ReadInputs, read_local_inputs)
         .add_systems(GgrsSchedule, move_player)
@@ -52,15 +53,32 @@ fn setup(mut commands: Commands) {
     ));
 }
 
-fn spawn_player(mut commands: Commands) {
-    commands.spawn((
-        Player,
-        Sprite {
-            color: Color::srgb(0., 0.47, 1.),
-            custom_size: Some(Vec2::new(1., 1.)),
-            ..default()
-        },
-    ));
+fn spawn_players(mut commands: Commands) {
+    // Player 1
+    commands
+        .spawn((
+            Player,
+            Transform::from_translation(Vec3::new(-2., 0., 0.)),
+            Sprite {
+                color: Color::srgb(0., 0.47, 1.),
+                custom_size: Some(Vec2::new(1., 1.)),
+                ..default()
+            },
+        ))
+        .add_rollback();
+
+    // Player 2
+    commands
+        .spawn((
+            Player,
+            Transform::from_translation(Vec3::new(2., 0., 0.)),
+            Sprite {
+                color: Color::srgb(0., 0.4, 0.),
+                custom_size: Some(Vec2::new(1., 1.)),
+                ..default()
+            },
+        ))
+        .add_rollback();
 }
 
 fn start_matchbox_socket(mut commands: Commands) {
