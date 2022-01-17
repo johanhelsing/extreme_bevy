@@ -1,5 +1,9 @@
 use bevy::{prelude::*, tasks::IoTaskPool};
+use bevy_ggrs::*;
+use ggrs::PlayerType;
 use matchbox_socket::WebRtcNonBlockingSocket;
+
+const INPUT_SIZE: usize = std::mem::size_of::<u8>();
 
 #[derive(Component)]
 struct Player;
@@ -47,7 +51,7 @@ fn start_matchbox_socket(mut commands: Commands, task_pool: Res<IoTaskPool>) {
     commands.insert_resource(Some(socket));
 }
 
-fn wait_for_players(mut socket: ResMut<Option<WebRtcNonBlockingSocket>>) {
+fn wait_for_players(mut commands: Commands, mut socket: ResMut<Option<WebRtcNonBlockingSocket>>) {
     let socket = socket.as_mut();
 
     // If there is no socket we've already started the game
@@ -65,6 +69,29 @@ fn wait_for_players(mut socket: ResMut<Option<WebRtcNonBlockingSocket>>) {
     }
 
     info!("All peers have joined, going in-game");
+
+    // consume the socket (currently required because GGRS takes ownership of its socket)
+    let socket = socket.take().unwrap();
+
+    let max_prediction = 12;
+
+    // create a GGRS P2P session
+    let mut p2p_session =
+        ggrs::P2PSession::new_with_socket(num_players as u32, INPUT_SIZE, max_prediction, socket);
+
+    for (i, player) in players.into_iter().enumerate() {
+        p2p_session
+            .add_player(player, i)
+            .expect("failed to add player");
+
+        if player == PlayerType::Local {
+            // set input delay for the local player
+            p2p_session.set_frame_delay(2, i).unwrap();
+        }
+    }
+
+    // start the GGRS session
+    commands.start_p2p_session(p2p_session);
 }
 
 fn move_player(keys: Res<Input<KeyCode>>, mut player_query: Query<&mut Transform, With<Player>>) {
