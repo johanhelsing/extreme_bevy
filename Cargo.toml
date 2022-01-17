@@ -9,3 +9,4 @@ opt-level = 2
 [dependencies]
 bevy = "0.15"
 bevy_ggrs = { version = "0.17", features = ["wasm-bindgen"] }
+bevy_matchbox = { version = "0.11", features = ["ggrs"] }
