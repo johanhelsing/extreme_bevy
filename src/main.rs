@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{camera::ScalingMode, prelude::*};
 
 fn main() {
     App::new()
@@ -12,5 +12,19 @@ fn main() {
             }),
             ..default()
         }))
+        .add_systems(Startup, setup)
         .run();
+}
+
+fn setup(mut commands: Commands) {
+    commands.spawn((
+        Camera2d,
+        Projection::Orthographic(OrthographicProjection {
+            scaling_mode: ScalingMode::AutoMax {
+                max_width: 16.0,
+                max_height: 9.0,
+            },
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
 }
