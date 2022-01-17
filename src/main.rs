@@ -1,5 +1,6 @@
 use bevy::{prelude::*, tasks::IoTaskPool};
 use bevy_ggrs::*;
+use ggrs::InputStatus;
 use matchbox_socket::WebRtcSocket;
 
 #[derive(Component)]
@@ -22,14 +23,22 @@ const INPUT_RIGHT: u8 = 1 << 3;
 const INPUT_FIRE: u8 = 1 << 4;
 
 fn main() {
-    App::new()
-        .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+    let mut app = App::new();
+
+    GGRSPlugin::<GgrsConfig>::new()
+        .with_input_system(input)
+        .with_rollback_schedule(Schedule::default().with_stage(
+            "ROLLBACK_STAGE",
+            SystemStage::single_threaded().with_system(move_player),
+        ))
+        .build(&mut app);
+
+    app.insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
         .add_startup_system(start_matchbox_socket)
         .add_startup_system(spawn_player)
         .add_system(wait_for_players)
-        .add_system(move_player)
         .run();
 }
 
@@ -106,18 +115,46 @@ fn wait_for_players(mut commands: Commands, mut socket: ResMut<Option<WebRtcSock
     commands.insert_resource(SessionType::P2PSession);
 }
 
-fn move_player(keys: Res<Input<KeyCode>>, mut player_query: Query<&mut Transform, With<Player>>) {
-    let mut direction = Vec2::ZERO;
+fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
+    let mut input = 0u8;
+
     if keys.any_pressed([KeyCode::Up, KeyCode::W]) {
-        direction.y += 1.;
+        input |= INPUT_UP;
     }
     if keys.any_pressed([KeyCode::Down, KeyCode::S]) {
-        direction.y -= 1.;
-    }
-    if keys.any_pressed([KeyCode::Right, KeyCode::D]) {
-        direction.x += 1.;
+        input |= INPUT_DOWN;
     }
     if keys.any_pressed([KeyCode::Left, KeyCode::A]) {
+        input |= INPUT_LEFT
+    }
+    if keys.any_pressed([KeyCode::Right, KeyCode::D]) {
+        input |= INPUT_RIGHT;
+    }
+    if keys.any_pressed([KeyCode::Space, KeyCode::Return]) {
+        input |= INPUT_FIRE;
+    }
+
+    input
+}
+
+fn move_player(
+    inputs: Res<Vec<(u8, InputStatus)>>,
+    mut player_query: Query<&mut Transform, With<Player>>,
+) {
+    let mut direction = Vec2::ZERO;
+
+    let (input, _) = inputs[0];
+
+    if input & INPUT_UP != 0 {
+        direction.y += 1.;
+    }
+    if input & INPUT_DOWN != 0 {
+        direction.y -= 1.;
+    }
+    if input & INPUT_RIGHT != 0 {
+        direction.x += 1.;
+    }
+    if input & INPUT_LEFT != 0 {
         direction.x -= 1.;
     }
     if direction == Vec2::ZERO {
