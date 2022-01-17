@@ -5,3 +5,10 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.7"
+ggrs = "0.9"
+bevy_ggrs = { version = "0.9", features = ["wasm-bindgen"] }
+
+# TODO: remove once new versions are released
+[patch.crates-io]
+ggrs = { git = "https://github.com/gschup/ggrs" }
+bevy_ggrs = { git = "https://github.com/gschup/bevy_ggrs" }
