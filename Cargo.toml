@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 bevy = "0.10"
 bevy_ggrs = { git = "https://github.com/johanhelsing/bevy_ggrs", branch = "bevy-0.10-refactor", features = ["wasm-bindgen"] }
+matchbox_socket = { git = "https://github.com/johanhelsing/matchbox", features = ["ggrs"] }
 
 [patch."https://github.com/gschup/ggrs"]
 ggrs = "0.9.3"
