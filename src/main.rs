@@ -1,8 +1,19 @@
 use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy_ggrs::*;
 use bevy_matchbox::prelude::*;
 
 #[derive(Component)]
 struct Player;
+
+struct GgrsConfig;
+
+impl ggrs::Config for GgrsConfig {
+    // 4-directions + fire fits easily in a single byte
+    type Input = u8;
+    type State = u8;
+    // Matchbox' WebRtcSocket addresses are called `PeerId`s
+    type Address = PeerId;
+}
 
 fn main() {
     App::new()
@@ -46,7 +57,11 @@ fn start_matchbox_socket(mut commands: Commands) {
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }
 
-fn wait_for_players(mut socket: ResMut<MatchboxSocket<SingleChannel>>) {
+fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocket<SingleChannel>>) {
+    if socket.get_channel(0).is_err() {
+        return; // we've already started
+    }
+
     // Check for new connections
     socket.update_peers();
     let players = socket.players();
@@ -57,6 +72,27 @@ fn wait_for_players(mut socket: ResMut<MatchboxSocket<SingleChannel>>) {
     }
 
     info!("All peers have joined, going in-game");
+
+    // create a GGRS P2P session
+    let mut session_builder = ggrs::SessionBuilder::<GgrsConfig>::new()
+        .with_num_players(num_players)
+        .with_input_delay(2);
+
+    for (i, player) in players.into_iter().enumerate() {
+        session_builder = session_builder
+            .add_player(player, i)
+            .expect("failed to add player");
+    }
+
+    // move the channel out of the socket (required because GGRS takes ownership of it)
+    let socket = socket.take_channel(0).unwrap();
+
+    // start the GGRS session
+    let ggrs_session = session_builder
+        .start_p2p_session(socket)
+        .expect("failed to start session");
+
+    commands.insert_resource(bevy_ggrs::Session::P2P(ggrs_session));
 }
 
 fn move_player(keys: Res<Input<KeyCode>>, mut player_query: Query<&mut Transform, With<Player>>) {
