@@ -1,4 +1,5 @@
 use bevy::{camera::ScalingMode, prelude::*};
+use bevy_matchbox::prelude::*;
 
 #[derive(Component)]
 struct Player;
@@ -16,8 +17,8 @@ fn main() {
             ..default()
         }))
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (setup, spawn_player))
-        .add_systems(Update, move_player)
+        .add_systems(Startup, (setup, spawn_player, start_matchbox_socket))
+        .add_systems(Update, (move_player, wait_for_players))
         .run();
 }
 
@@ -43,6 +44,25 @@ fn spawn_player(mut commands: Commands) {
             ..default()
         },
     ));
+}
+
+fn start_matchbox_socket(mut commands: Commands) {
+    let room_url = "ws://127.0.0.1:3536/extreme_bevy?next=2";
+    info!("connecting to matchbox server: {room_url}");
+    commands.insert_resource(MatchboxSocket::new_unreliable(room_url));
+}
+
+fn wait_for_players(mut socket: ResMut<MatchboxSocket>) {
+    // Check for new connections
+    socket.update_peers();
+    let players = socket.players();
+
+    let num_players = 2;
+    if players.len() < num_players {
+        return; // wait for more players
+    }
+
+    info!("All peers have joined, going in-game");
 }
 
 fn move_player(
