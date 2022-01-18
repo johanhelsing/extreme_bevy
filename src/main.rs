@@ -65,6 +65,7 @@ fn main() {
                 move_players,
                 reload_bullet,
                 fire_bullets.after(move_players).after(reload_bullet),
+                move_bullet.after(fire_bullets),
             ),
         )
         .run();
@@ -245,6 +246,7 @@ fn fire_bullets(
         if fire(input) && bullet_ready.0 {
             commands
                 .spawn((
+                    Bullet,
                     Transform::from_translation(transform.translation),
                     Sprite {
                         image: images.bullet.clone(),
@@ -255,6 +257,13 @@ fn fire_bullets(
                 .add_rollback();
             bullet_ready.0 = false;
         }
+    }
+}
+
+fn move_bullet(mut bullets: Query<&mut Transform, With<Bullet>>, time: Res<Time>) {
+    for mut transform in &mut bullets {
+        let speed = 1.;
+        transform.translation.x += speed * time.delta_secs();
     }
 }
 
