@@ -12,7 +12,9 @@ const INPUT_RIGHT: u8 = 1 << 3;
 const INPUT_FIRE: u8 = 1 << 4;
 
 #[derive(Component)]
-struct Player;
+struct Player {
+    handle: usize,
+}
 
 fn main() {
     App::new()
@@ -22,7 +24,7 @@ fn main() {
         .with_input_system(input)
         .with_rollback_schedule(Schedule::default().with_stage(
             "ROLLBACK_STAGE",
-            SystemStage::single_threaded().with_system(move_player),
+            SystemStage::single_threaded().with_system(move_players),
         ))
         .register_rollback_type::<Transform>()
         .add_startup_system(setup)
@@ -50,7 +52,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
             },
             ..Default::default()
         })
-        .insert(Player)
+        .insert(Player { handle: 0 })
         .insert(Rollback::new(rip.next_id()));
 
     // Player 2
@@ -64,7 +66,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
             },
             ..Default::default()
         })
-        .insert(Player)
+        .insert(Player { handle: 1 })
         .insert(Rollback::new(rip.next_id()));
 }
 
@@ -145,34 +147,34 @@ fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> Vec<u8> {
     vec![input]
 }
 
-fn move_player(
+fn move_players(
     inputs: Res<Vec<ggrs::GameInput>>,
-    mut player_query: Query<&mut Transform, With<Player>>,
+    mut player_query: Query<(&mut Transform, &Player)>,
 ) {
-    let mut direction = Vec2::ZERO;
+    for (mut transform, player) in player_query.iter_mut() {
+        let input = inputs[player.handle].buffer[0];
 
-    let input = inputs[0].buffer[0];
+        let mut direction = Vec2::ZERO;
 
-    if input & INPUT_UP != 0 {
-        direction.y += 1.;
-    }
-    if input & INPUT_DOWN != 0 {
-        direction.y -= 1.;
-    }
-    if input & INPUT_RIGHT != 0 {
-        direction.x += 1.;
-    }
-    if input & INPUT_LEFT != 0 {
-        direction.x -= 1.;
-    }
-    if direction == Vec2::ZERO {
-        return;
-    }
+        if input & INPUT_UP != 0 {
+            direction.y += 1.;
+        }
+        if input & INPUT_DOWN != 0 {
+            direction.y -= 1.;
+        }
+        if input & INPUT_RIGHT != 0 {
+            direction.x += 1.;
+        }
+        if input & INPUT_LEFT != 0 {
+            direction.x -= 1.;
+        }
+        if direction == Vec2::ZERO {
+            continue;
+        }
 
-    let move_speed = 0.13;
-    let move_delta = (direction * move_speed).extend(0.);
+        let move_speed = 0.13;
+        let move_delta = (direction * move_speed).extend(0.);
 
-    for mut transform in player_query.iter_mut() {
         transform.translation += move_delta;
     }
 }
