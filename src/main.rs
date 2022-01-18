@@ -44,7 +44,7 @@ fn main() {
                 SystemStage::single_threaded()
                     .with_system(move_players)
                     .with_system(reload_bullet)
-                    .with_system(fire_bullets),
+                    .with_system(fire_bullets.after(move_players).after(reload_bullet)),
             ),
         )
         .register_rollback_component::<Transform>()
