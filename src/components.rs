@@ -4,3 +4,6 @@ use bevy::prelude::*;
 pub struct Player {
     pub handle: usize,
 }
+
+#[derive(Component, Reflect, Default)]
+pub struct BulletReady(pub bool);
