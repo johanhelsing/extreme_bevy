@@ -25,10 +25,48 @@ fn main() {
         .add_startup_system(start_matchbox_socket)
         .add_startup_system(spawn_players)
         .add_system(wait_for_players)
+        .add_system(camera_follow)
         .run();
 }
 
+const MAP_SIZE: i32 = 41;
+const GRID_WIDTH: f32 = 0.05;
+
 fn setup(mut commands: Commands) {
+    // Horizontal lines
+    for i in 0..=MAP_SIZE {
+        commands.spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(
+                0.,
+                i as f32 - MAP_SIZE as f32 / 2.,
+                0.,
+            )),
+            sprite: Sprite {
+                color: Color::rgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(MAP_SIZE as f32, GRID_WIDTH)),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+    }
+
+    // Vertical lines
+    for i in 0..=MAP_SIZE {
+        commands.spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(
+                i as f32 - MAP_SIZE as f32 / 2.,
+                0.,
+                0.,
+            )),
+            sprite: Sprite {
+                color: Color::rgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(GRID_WIDTH, MAP_SIZE as f32)),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+    }
+
     let mut camera_bundle = OrthographicCameraBundle::new_2d();
     camera_bundle.orthographic_projection.scale = 1. / 50.;
     commands.spawn_bundle(camera_bundle);
@@ -38,7 +76,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
     // Player 1
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(-2., 0., 0.)),
+            transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
             sprite: Sprite {
                 color: Color::rgb(0., 0.47, 1.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -52,7 +90,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
     // Player 2
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(2., 0., 0.)),
+            transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
             sprite: Sprite {
                 color: Color::rgb(0., 0.4, 0.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -135,5 +173,29 @@ fn move_players(
         let move_delta = (direction * move_speed).extend(0.);
 
         transform.translation += move_delta;
+    }
+}
+
+fn camera_follow(
+    player_handle: Option<Res<LocalPlayerHandle>>,
+    player_query: Query<(&Player, &Transform)>,
+    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+) {
+    let player_handle = match player_handle {
+        Some(handle) => handle.0,
+        None => return, // Session hasn't started yet
+    };
+
+    for (player, player_transform) in player_query.iter() {
+        if player.handle != player_handle {
+            continue;
+        }
+
+        let pos = player_transform.translation;
+
+        for mut transform in camera_query.iter_mut() {
+            transform.translation.x = pos.x;
+            transform.translation.y = pos.y;
+        }
     }
 }
