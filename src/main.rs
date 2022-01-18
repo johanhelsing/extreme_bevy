@@ -3,7 +3,9 @@ use bevy_ggrs::*;
 use bevy_matchbox::prelude::*;
 
 #[derive(Component)]
-struct Player;
+struct Player {
+    handle: usize,
+}
 
 // The first generic parameter, u8, is the input type: 4-directions + fire fits
 // easily in a single byte
@@ -35,7 +37,7 @@ fn main() {
         .add_systems(Startup, (setup, spawn_players, start_matchbox_socket))
         .add_systems(Update, wait_for_players)
         .add_systems(ReadInputs, read_local_inputs)
-        .add_systems(GgrsSchedule, move_player)
+        .add_systems(GgrsSchedule, move_players)
         .run();
 }
 
@@ -49,7 +51,7 @@ fn spawn_players(mut commands: Commands) {
     // Player 1
     commands
         .spawn((
-            Player,
+            Player { handle: 0 },
             SpriteBundle {
                 transform: Transform::from_translation(Vec3::new(-2., 0., 0.)),
                 sprite: Sprite {
@@ -65,7 +67,7 @@ fn spawn_players(mut commands: Commands) {
     // Player 2
     commands
         .spawn((
-            Player,
+            Player { handle: 1 },
             SpriteBundle {
                 transform: Transform::from_translation(Vec3::new(2., 0., 0.)),
                 sprite: Sprite {
@@ -155,35 +157,34 @@ fn read_local_inputs(
     commands.insert_resource(LocalInputs::<Config>(local_inputs));
 }
 
-fn move_player(
-    mut players: Query<&mut Transform, With<Player>>,
+fn move_players(
+    mut players: Query<(&mut Transform, &Player)>,
     inputs: Res<PlayerInputs<Config>>,
     time: Res<Time>,
 ) {
-    let mut direction = Vec2::ZERO;
+    for (mut transform, player) in &mut players {
+        let (input, _) = inputs[player.handle];
 
-    let (input, _) = inputs[0];
+        let mut direction = Vec2::ZERO;
 
-    if input & INPUT_UP != 0 {
-        direction.y += 1.;
-    }
-    if input & INPUT_DOWN != 0 {
-        direction.y -= 1.;
-    }
-    if input & INPUT_RIGHT != 0 {
-        direction.x += 1.;
-    }
-    if input & INPUT_LEFT != 0 {
-        direction.x -= 1.;
-    }
-    if direction == Vec2::ZERO {
-        return;
-    }
+        if input & INPUT_UP != 0 {
+            direction.y += 1.;
+        }
+        if input & INPUT_DOWN != 0 {
+            direction.y -= 1.;
+        }
+        if input & INPUT_RIGHT != 0 {
+            direction.x += 1.;
+        }
+        if input & INPUT_LEFT != 0 {
+            direction.x -= 1.;
+        }
+        if direction == Vec2::ZERO {
+            continue;
+        }
 
-    let move_speed = 7.;
-    let move_delta = direction * move_speed * time.delta_seconds();
-
-    for mut transform in &mut players {
+        let move_speed = 7.;
+        let move_delta = direction * move_speed * time.delta_seconds();
         transform.translation += move_delta.extend(0.);
     }
 }
