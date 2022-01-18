@@ -58,7 +58,10 @@ fn main() {
             ),
         )
         .add_systems(ReadInputs, read_local_inputs)
-        .add_systems(GgrsSchedule, move_players)
+        .add_systems(
+            GgrsSchedule,
+            (move_players, fire_bullets.after(move_players)),
+        )
         .run();
 }
 
@@ -209,6 +212,27 @@ fn move_players(
 
         transform.translation.x = new_pos.x;
         transform.translation.y = new_pos.y;
+    }
+}
+
+fn fire_bullets(
+    mut commands: Commands,
+    inputs: Res<PlayerInputs<Config>>,
+    images: Res<ImageAssets>,
+    players: Query<(&Transform, &Player)>,
+) {
+    for (transform, player) in &players {
+        let (input, _) = inputs[player.handle];
+        if fire(input) {
+            commands.spawn((
+                Transform::from_translation(transform.translation),
+                Sprite {
+                    image: images.bullet.clone(),
+                    custom_size: Some(Vec2::new(0.3, 0.1)),
+                    ..default()
+                },
+            ));
+        }
     }
 }
 
