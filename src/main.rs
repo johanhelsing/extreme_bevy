@@ -31,10 +31,14 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(GGRSPlugin)
         .with_input_system(input)
-        .with_rollback_schedule(Schedule::default().with_stage(
-            "ROLLBACK_STAGE",
-            SystemStage::single_threaded().with_system(move_players),
-        ))
+        .with_rollback_schedule(
+            Schedule::default().with_stage(
+                "ROLLBACK_STAGE",
+                SystemStage::single_threaded()
+                    .with_system(move_players)
+                    .with_system(fire_bullets),
+            ),
+        )
         .register_rollback_type::<Transform>()
         .add_system_set(
             SystemSet::on_enter(GameState::Matchmaking)
@@ -210,6 +214,27 @@ fn move_players(
 
         transform.translation.x = new_pos.x;
         transform.translation.y = new_pos.y;
+    }
+}
+
+fn fire_bullets(
+    mut commands: Commands,
+    inputs: Res<Vec<ggrs::GameInput>>,
+    images: Res<ImageAssets>,
+    player_query: Query<(&Transform, &Player)>,
+) {
+    for (transform, player) in player_query.iter() {
+        if fired(&inputs[player.handle]) {
+            commands.spawn_bundle(SpriteBundle {
+                transform: Transform::from_translation(transform.translation),
+                texture: images.bullet.clone(),
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(0.3, 0.1)),
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
+        }
     }
 }
 

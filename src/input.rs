@@ -48,3 +48,8 @@ pub fn direction(game_input: &GameInput) -> Vec2 {
     }
     direction
 }
+
+pub fn fired(game_input: &GameInput) -> bool {
+    let input = game_input.buffer[0];
+    input & INPUT_FIRE != 0
+}
