@@ -1,4 +1,5 @@
 use bevy::{math::Vec3Swizzles, prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
+use bevy_asset_loader::prelude::*;
 use bevy_ggrs::{ggrs::PlayerType, *};
 use components::*;
 use input::*;
@@ -22,6 +23,13 @@ impl ggrs::Config for GgrsConfig {
     type Address = String;
 }
 
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+enum GameState {
+    AssetLoading,
+    Matchmaking,
+    InGame,
+}
+
 #[derive(Resource)]
 struct LocalPlayerHandle(usize);
 
@@ -37,7 +45,13 @@ fn main() {
         .register_rollback_component::<Transform>()
         .build(&mut app);
 
-    app.insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+    app.add_state(GameState::AssetLoading)
+        .add_loading_state(
+            LoadingState::new(GameState::AssetLoading)
+                .with_collection::<ImageAssets>()
+                .continue_to_state(GameState::Matchmaking),
+        )
+        .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 // fill the entire browser window
@@ -46,16 +60,25 @@ fn main() {
             },
             ..default()
         }))
-        .add_startup_system(setup)
-        .add_startup_system(start_matchbox_socket)
-        .add_startup_system(spawn_players)
-        .add_system(wait_for_players)
-        .add_system(camera_follow)
+        .add_system_set(
+            SystemSet::on_enter(GameState::Matchmaking)
+                .with_system(start_matchbox_socket)
+                .with_system(setup),
+        )
+        .add_system_set(SystemSet::on_update(GameState::Matchmaking).with_system(wait_for_players))
+        .add_system_set(SystemSet::on_enter(GameState::InGame).with_system(spawn_players))
+        .add_system_set(SystemSet::on_update(GameState::InGame).with_system(camera_follow))
         .run();
 }
 
 const MAP_SIZE: i32 = 41;
 const GRID_WIDTH: f32 = 0.05;
+
+#[derive(AssetCollection, Resource)]
+struct ImageAssets {
+    #[asset(path = "bullet.png")]
+    bullet: Handle<Image>,
+}
 
 fn setup(mut commands: Commands) {
     // Horizontal lines
@@ -98,6 +121,8 @@ fn setup(mut commands: Commands) {
 }
 
 fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
+    info!("Spawning players");
+
     // Player 1
     commands.spawn((
         Player { handle: 0 },
@@ -143,7 +168,11 @@ fn start_matchbox_socket(mut commands: Commands) {
     });
 }
 
-fn wait_for_players(mut commands: Commands, mut session: ResMut<Session>) {
+fn wait_for_players(
+    mut commands: Commands,
+    mut session: ResMut<Session>,
+    mut state: ResMut<State<GameState>>,
+) {
     let Some(socket) = &mut session.socket else {
         // If there is no socket we've already started the game
         return;
@@ -184,6 +213,7 @@ fn wait_for_players(mut commands: Commands, mut session: ResMut<Session>) {
         .expect("failed to start session");
 
     commands.insert_resource(bevy_ggrs::Session::P2PSession(ggrs_session));
+    state.set(GameState::InGame).unwrap();
 }
 
 fn move_players(

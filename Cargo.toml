@@ -9,6 +9,7 @@ bevy = "0.9"
 # bevy_ggrs = { version = "0.10", features = ["wasm-bindgen"] }
 bevy_ggrs = { git = "https://github.com/Vrixyz/bevy_ggrs", branch = "pr/johanhelsing/36", features = ["wasm-bindgen"] }
 matchbox_socket = { version = "0.4", features = ["ggrs-socket"] }
+bevy_asset_loader = "0.14"
 
 # TODO: remove patches after new bevy_ggrs release
 [patch.crates-io]
