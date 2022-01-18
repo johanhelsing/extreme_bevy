@@ -36,10 +36,12 @@ fn main() {
                 "ROLLBACK_STAGE",
                 SystemStage::single_threaded()
                     .with_system(move_players)
+                    .with_system(reload_bullet)
                     .with_system(fire_bullets),
             ),
         )
         .register_rollback_type::<Transform>()
+        .register_rollback_type::<BulletReady>()
         .add_system_set(
             SystemSet::on_enter(GameState::Matchmaking)
                 .with_system(start_matchbox_socket)
@@ -115,6 +117,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
             ..Default::default()
         })
         .insert(Player { handle: 0 })
+        .insert(BulletReady(true))
         .insert(Rollback::new(rip.next_id()));
 
     // Player 2
@@ -129,6 +132,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
             ..Default::default()
         })
         .insert(Player { handle: 1 })
+        .insert(BulletReady(true))
         .insert(Rollback::new(rip.next_id()));
 }
 
@@ -217,23 +221,35 @@ fn move_players(
     }
 }
 
+fn reload_bullet(inputs: Res<Vec<ggrs::GameInput>>, mut query: Query<(&mut BulletReady, &Player)>) {
+    for (mut can_fire, player) in query.iter_mut() {
+        if !fire(&inputs[player.handle]) {
+            can_fire.0 = true;
+        }
+    }
+}
+
 fn fire_bullets(
     mut commands: Commands,
     inputs: Res<Vec<ggrs::GameInput>>,
     images: Res<ImageAssets>,
-    player_query: Query<(&Transform, &Player)>,
+    mut player_query: Query<(&Transform, &Player, &mut BulletReady)>,
+    mut rip: ResMut<RollbackIdProvider>,
 ) {
-    for (transform, player) in player_query.iter() {
-        if fired(&inputs[player.handle]) {
-            commands.spawn_bundle(SpriteBundle {
-                transform: Transform::from_translation(transform.translation),
-                texture: images.bullet.clone(),
-                sprite: Sprite {
-                    custom_size: Some(Vec2::new(0.3, 0.1)),
+    for (transform, player, mut bullet_ready) in player_query.iter_mut() {
+        if fire(&inputs[player.handle]) && bullet_ready.0 {
+            commands
+                .spawn_bundle(SpriteBundle {
+                    transform: Transform::from_translation(transform.translation),
+                    texture: images.bullet.clone(),
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(0.3, 0.1)),
+                        ..Default::default()
+                    },
                     ..Default::default()
-                },
-                ..Default::default()
-            });
+                })
+                .insert(Rollback::new(rip.next_id()));
+            bullet_ready.0 = false;
         }
     }
 }
