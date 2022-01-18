@@ -8,6 +8,8 @@ use matchbox_socket::WebRtcNonBlockingSocket;
 mod components;
 mod input;
 
+struct LocalPlayerHandle(usize);
+
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
@@ -110,6 +112,7 @@ fn wait_for_players(mut commands: Commands, mut socket: ResMut<Option<WebRtcNonB
         if player == PlayerType::Local {
             // set input delay for the local player
             p2p_session.set_frame_delay(2, i).unwrap();
+            commands.insert_resource(LocalPlayerHandle(i));
         }
     }
 
