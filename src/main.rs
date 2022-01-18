@@ -44,7 +44,8 @@ fn main() {
                 SystemStage::single_threaded()
                     .with_system(move_players)
                     .with_system(reload_bullet)
-                    .with_system(fire_bullets.after(move_players).after(reload_bullet)),
+                    .with_system(fire_bullets.after(move_players).after(reload_bullet))
+                    .with_system(move_bullet),
             ),
         )
         .register_rollback_component::<Transform>()
@@ -269,6 +270,7 @@ fn fire_bullets(
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
             commands.spawn((
+                Bullet,
                 Rollback::new(rip.next_id()),
                 SpriteBundle {
                     transform: Transform::from_translation(transform.translation),
@@ -282,6 +284,12 @@ fn fire_bullets(
             ));
             bullet_ready.0 = false;
         }
+    }
+}
+
+fn move_bullet(mut query: Query<&mut Transform, With<Bullet>>) {
+    for mut transform in query.iter_mut() {
+        transform.translation.x += 0.1;
     }
 }
 
