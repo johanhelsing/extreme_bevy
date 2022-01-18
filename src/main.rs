@@ -1,5 +1,5 @@
 use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
-use bevy_ggrs::*;
+use bevy_ggrs::{ggrs::PlayerType, *};
 use components::*;
 use input::*;
 use matchbox_socket::WebRtcSocket;
@@ -21,6 +21,9 @@ impl ggrs::Config for GgrsConfig {
     // Matchbox' WebRtcSocket addresses are strings
     type Address = String;
 }
+
+#[derive(Resource)]
+struct LocalPlayerHandle(usize);
 
 fn main() {
     let mut app = App::new();
@@ -125,6 +128,10 @@ fn wait_for_players(mut commands: Commands, mut session: ResMut<Session>) {
         .with_input_delay(2);
 
     for (i, player) in players.into_iter().enumerate() {
+        if player == PlayerType::Local {
+            commands.insert_resource(LocalPlayerHandle(i));
+        }
+
         session_builder = session_builder
             .add_player(player, i)
             .expect("failed to add player");
