@@ -1,18 +1,15 @@
 use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
 use bevy_ggrs::*;
+use components::*;
 use input::*;
 use matchbox_socket::WebRtcSocket;
 
+mod components;
 mod input;
 
 #[derive(Resource)]
 struct Session {
     socket: Option<WebRtcSocket>,
-}
-
-#[derive(Component)]
-struct Player {
-    handle: usize,
 }
 
 struct GgrsConfig;
