@@ -1,14 +1,11 @@
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_ggrs::*;
 use bevy_matchbox::prelude::*;
+use components::*;
 use input::*;
 
+mod components;
 mod input;
-
-#[derive(Component)]
-struct Player {
-    handle: usize,
-}
 
 struct GgrsConfig;
 
