@@ -45,3 +45,7 @@ pub fn direction(input: u8) -> Vec2 {
     }
     direction
 }
+
+pub fn fire(input: u8) -> bool {
+    input & INPUT_FIRE != 0
+}
