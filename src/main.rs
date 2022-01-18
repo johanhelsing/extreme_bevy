@@ -56,8 +56,8 @@ fn main() {
             wait_for_players.run_if(in_state(GameState::Matchmaking)),
             spawn_players.in_schedule(OnEnter(GameState::InGame)),
             camera_follow.run_if(in_state(GameState::InGame)),
-            move_players.in_schedule(GGRSSchedule),
         ))
+        .add_systems((move_players, fire_bullets).in_schedule(GGRSSchedule))
         .run();
 }
 
@@ -218,6 +218,28 @@ fn move_players(
 
         transform.translation.x = new_pos.x;
         transform.translation.y = new_pos.y;
+    }
+}
+
+fn fire_bullets(
+    mut commands: Commands,
+    inputs: Res<PlayerInputs<GgrsConfig>>,
+    images: Res<ImageAssets>,
+    player_query: Query<(&Transform, &Player)>,
+) {
+    for (transform, player) in player_query.iter() {
+        let (input, _) = inputs[player.handle];
+        if fire(input) {
+            commands.spawn(SpriteBundle {
+                transform: Transform::from_translation(transform.translation),
+                texture: images.bullet.clone(),
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(0.3, 0.1)),
+                    ..default()
+                },
+                ..default()
+            });
+        }
     }
 }
 
