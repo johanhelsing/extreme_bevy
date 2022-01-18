@@ -1,15 +1,12 @@
 use bevy::{prelude::*, tasks::IoTaskPool};
 use bevy_ggrs::*;
 use ggrs::InputStatus;
+use components::*;
 use input::*;
 use matchbox_socket::WebRtcSocket;
 
+mod components;
 mod input;
-
-#[derive(Component)]
-struct Player {
-    handle: usize,
-}
 
 struct GgrsConfig;
 
