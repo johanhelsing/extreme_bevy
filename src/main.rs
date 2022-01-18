@@ -63,6 +63,7 @@ fn main() {
                 move_players,
                 reload_bullet,
                 fire_bullets.after(move_players).after(reload_bullet),
+                move_bullet.after(fire_bullets),
             )
                 .in_schedule(GGRSSchedule),
         )
@@ -254,6 +255,7 @@ fn fire_bullets(
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
             commands.spawn((
+                Bullet,
                 rip.next(),
                 SpriteBundle {
                     transform: Transform::from_translation(transform.translation),
@@ -267,6 +269,12 @@ fn fire_bullets(
             ));
             bullet_ready.0 = false;
         }
+    }
+}
+
+fn move_bullet(mut query: Query<&mut Transform, With<Bullet>>) {
+    for mut transform in query.iter_mut() {
+        transform.translation.x += 0.1;
     }
 }
 
