@@ -8,6 +8,7 @@ bevy = "0.7"
 ggrs = "0.9"
 bevy_ggrs = { version = "0.9", features = ["wasm-bindgen"] }
 matchbox_socket = { version = "0.3", features = ["ggrs-socket"] }
+bevy_asset_loader = "0.10"
 
 # TODO: remove once new versions are released
 [patch.crates-io]

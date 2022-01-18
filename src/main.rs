@@ -1,4 +1,5 @@
 use bevy::{math::Vec3Swizzles, prelude::*, tasks::IoTaskPool};
+use bevy_asset_loader::{AssetCollection, AssetLoader};
 use bevy_ggrs::*;
 use components::*;
 use ggrs::{InputStatus, PlayerType};
@@ -18,6 +19,13 @@ impl ggrs::Config for GgrsConfig {
     type Address = String;
 }
 
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+enum GameState {
+    AssetLoading,
+    Matchmaking,
+    InGame,
+}
+
 struct LocalPlayerHandle(usize);
 
 fn main() {
@@ -32,18 +40,33 @@ fn main() {
         .register_rollback_type::<Transform>()
         .build(&mut app);
 
-    app.insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+    AssetLoader::new(GameState::AssetLoading)
+        .continue_to_state(GameState::Matchmaking)
+        .with_collection::<ImageAssets>()
+        .build(&mut app);
+
+    app.add_state(GameState::AssetLoading)
+        .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_plugins(DefaultPlugins)
-        .add_startup_system(setup)
-        .add_startup_system(start_matchbox_socket)
-        .add_startup_system(spawn_players)
-        .add_system(wait_for_players)
-        .add_system(camera_follow)
+        .add_system_set(
+            SystemSet::on_enter(GameState::Matchmaking)
+                .with_system(start_matchbox_socket)
+                .with_system(setup),
+        )
+        .add_system_set(SystemSet::on_update(GameState::Matchmaking).with_system(wait_for_players))
+        .add_system_set(SystemSet::on_enter(GameState::InGame).with_system(spawn_players))
+        .add_system_set(SystemSet::on_update(GameState::InGame).with_system(camera_follow))
         .run();
 }
 
 const MAP_SIZE: i32 = 41;
 const GRID_WIDTH: f32 = 0.05;
+
+#[derive(AssetCollection)]
+struct ImageAssets {
+    #[asset(path = "bullet.png")]
+    bullet: Handle<Image>,
+}
 
 fn setup(mut commands: Commands) {
     // Horizontal lines
@@ -86,6 +109,8 @@ fn setup(mut commands: Commands) {
 }
 
 fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
+    info!("Spawning players");
+
     // Player 1
     commands
         .spawn_bundle(SpriteBundle {
@@ -127,7 +152,11 @@ fn start_matchbox_socket(mut commands: Commands, task_pool: Res<IoTaskPool>) {
     commands.insert_resource(Some(socket));
 }
 
-fn wait_for_players(mut commands: Commands, mut socket: ResMut<Option<WebRtcSocket>>) {
+fn wait_for_players(
+    mut commands: Commands,
+    mut socket: ResMut<Option<WebRtcSocket>>,
+    mut state: ResMut<State<GameState>>,
+) {
     let socket = socket.as_mut();
 
     // If there is no socket we've already started the game
@@ -171,6 +200,8 @@ fn wait_for_players(mut commands: Commands, mut socket: ResMut<Option<WebRtcSock
 
     commands.insert_resource(session);
     commands.insert_resource(SessionType::P2PSession);
+
+    state.set(GameState::InGame).unwrap();
 }
 
 fn move_players(
