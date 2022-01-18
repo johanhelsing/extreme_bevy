@@ -1,15 +1,10 @@
 use bevy::{prelude::*, tasks::IoTaskPool};
 use bevy_ggrs::*;
 use ggrs::PlayerType;
+use input::*;
 use matchbox_socket::WebRtcNonBlockingSocket;
 
-const INPUT_SIZE: usize = std::mem::size_of::<u8>();
-
-const INPUT_UP: u8 = 1 << 0;
-const INPUT_DOWN: u8 = 1 << 1;
-const INPUT_LEFT: u8 = 1 << 2;
-const INPUT_RIGHT: u8 = 1 << 3;
-const INPUT_FIRE: u8 = 1 << 4;
+mod input;
 
 #[derive(Component)]
 struct Player {
@@ -125,49 +120,13 @@ fn wait_for_players(mut commands: Commands, mut socket: ResMut<Option<WebRtcNonB
     commands.start_p2p_session(p2p_session);
 }
 
-fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> Vec<u8> {
-    let mut input = 0u8;
-
-    if keys.any_pressed([KeyCode::Up, KeyCode::W]) {
-        input |= INPUT_UP;
-    }
-    if keys.any_pressed([KeyCode::Down, KeyCode::S]) {
-        input |= INPUT_DOWN;
-    }
-    if keys.any_pressed([KeyCode::Left, KeyCode::A]) {
-        input |= INPUT_LEFT
-    }
-    if keys.any_pressed([KeyCode::Right, KeyCode::D]) {
-        input |= INPUT_RIGHT;
-    }
-    if keys.any_pressed([KeyCode::Space, KeyCode::Return]) {
-        input |= INPUT_FIRE;
-    }
-
-    vec![input]
-}
-
 fn move_players(
     inputs: Res<Vec<ggrs::GameInput>>,
     mut player_query: Query<(&mut Transform, &Player)>,
 ) {
     for (mut transform, player) in player_query.iter_mut() {
-        let input = inputs[player.handle].buffer[0];
+        let direction = direction(&inputs[player.handle]);
 
-        let mut direction = Vec2::ZERO;
-
-        if input & INPUT_UP != 0 {
-            direction.y += 1.;
-        }
-        if input & INPUT_DOWN != 0 {
-            direction.y -= 1.;
-        }
-        if input & INPUT_RIGHT != 0 {
-            direction.x += 1.;
-        }
-        if input & INPUT_LEFT != 0 {
-            direction.x -= 1.;
-        }
         if direction == Vec2::ZERO {
             continue;
         }
