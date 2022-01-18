@@ -69,6 +69,7 @@ fn main() {
                 move_players,
                 reload_bullet,
                 fire_bullets.after(move_players).after(reload_bullet),
+                move_bullet.after(fire_bullets),
             ),
         )
         .run();
@@ -260,18 +261,27 @@ fn fire_bullets(
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
             commands
-                .spawn((SpriteBundle {
-                    transform: Transform::from_translation(transform.translation),
-                    texture: images.bullet.clone(),
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(0.3, 0.1)),
+                .spawn((
+                    Bullet,
+                    SpriteBundle {
+                        transform: Transform::from_translation(transform.translation),
+                        texture: images.bullet.clone(),
+                        sprite: Sprite {
+                            custom_size: Some(Vec2::new(0.3, 0.1)),
+                            ..default()
+                        },
                         ..default()
                     },
-                    ..default()
-                },))
+                ))
                 .add_rollback();
             bullet_ready.0 = false;
         }
+    }
+}
+
+fn move_bullet(mut query: Query<&mut Transform, With<Bullet>>) {
+    for mut transform in query.iter_mut() {
+        transform.translation.x += 0.1;
     }
 }
 

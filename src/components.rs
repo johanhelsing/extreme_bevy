@@ -7,3 +7,6 @@ pub struct Player {
 
 #[derive(Component, Reflect, Default)]
 pub struct BulletReady(pub bool);
+
+#[derive(Component, Reflect, Default)]
+pub struct Bullet;
