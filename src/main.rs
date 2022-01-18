@@ -1,6 +1,9 @@
 use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
 use bevy_ggrs::*;
+use input::*;
 use matchbox_socket::WebRtcSocket;
+
+mod input;
 
 #[derive(Resource)]
 struct Session {
@@ -21,12 +24,6 @@ impl ggrs::Config for GgrsConfig {
     // Matchbox' WebRtcSocket addresses are strings
     type Address = String;
 }
-
-const INPUT_UP: u8 = 1 << 0;
-const INPUT_DOWN: u8 = 1 << 1;
-const INPUT_LEFT: u8 = 1 << 2;
-const INPUT_RIGHT: u8 = 1 << 3;
-const INPUT_FIRE: u8 = 1 << 4;
 
 fn main() {
     let mut app = App::new();
@@ -147,49 +144,14 @@ fn wait_for_players(mut commands: Commands, mut session: ResMut<Session>) {
     commands.insert_resource(bevy_ggrs::Session::P2PSession(ggrs_session));
 }
 
-fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
-    let mut input = 0u8;
-
-    if keys.any_pressed([KeyCode::Up, KeyCode::W]) {
-        input |= INPUT_UP;
-    }
-    if keys.any_pressed([KeyCode::Down, KeyCode::S]) {
-        input |= INPUT_DOWN;
-    }
-    if keys.any_pressed([KeyCode::Left, KeyCode::A]) {
-        input |= INPUT_LEFT
-    }
-    if keys.any_pressed([KeyCode::Right, KeyCode::D]) {
-        input |= INPUT_RIGHT;
-    }
-    if keys.any_pressed([KeyCode::Space, KeyCode::Return]) {
-        input |= INPUT_FIRE;
-    }
-
-    input
-}
-
 fn move_players(
     inputs: Res<PlayerInputs<GgrsConfig>>,
     mut player_query: Query<(&mut Transform, &Player)>,
 ) {
     for (mut transform, player) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
+        let direction = direction(input);
 
-        let mut direction = Vec2::ZERO;
-
-        if input & INPUT_UP != 0 {
-            direction.y += 1.;
-        }
-        if input & INPUT_DOWN != 0 {
-            direction.y -= 1.;
-        }
-        if input & INPUT_RIGHT != 0 {
-            direction.x += 1.;
-        }
-        if input & INPUT_LEFT != 0 {
-            direction.x -= 1.;
-        }
         if direction == Vec2::ZERO {
             continue;
         }
