@@ -58,7 +58,14 @@ fn main() {
             spawn_players.in_schedule(OnEnter(GameState::InGame)),
             camera_follow.run_if(in_state(GameState::InGame)),
         ))
-        .add_systems((move_players, reload_bullet, fire_bullets).in_schedule(GGRSSchedule))
+        .add_systems(
+            (
+                move_players,
+                reload_bullet,
+                fire_bullets.after(move_players).after(reload_bullet),
+            )
+                .in_schedule(GGRSSchedule),
+        )
         .run();
 }
 
