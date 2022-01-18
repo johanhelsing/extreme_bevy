@@ -1,4 +1,4 @@
-use bevy::{prelude::*, tasks::IoTaskPool};
+use bevy::{math::Vec3Swizzles, prelude::*, tasks::IoTaskPool};
 use bevy_ggrs::*;
 use components::*;
 use ggrs::{InputStatus, PlayerType};
@@ -186,9 +186,14 @@ fn move_players(
         }
 
         let move_speed = 0.13;
-        let move_delta = (direction * move_speed).extend(0.);
+        let move_delta = direction * move_speed;
 
-        transform.translation += move_delta;
+        let old_pos = transform.translation.xy();
+        let limit = Vec2::splat(MAP_SIZE as f32 / 2. - 0.5);
+        let new_pos = (old_pos + move_delta).clamp(-limit, limit);
+
+        transform.translation.x = new_pos.x;
+        transform.translation.y = new_pos.y;
     }
 }
 
