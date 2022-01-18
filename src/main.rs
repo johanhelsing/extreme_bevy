@@ -23,6 +23,7 @@ enum Systems {
     Move,
     Reload,
     Fire,
+    MoveBullet,
 }
 
 fn main() {
@@ -50,7 +51,8 @@ fn main() {
                             .label(Systems::Fire)
                             .after(Systems::Move)
                             .after(Systems::Reload),
-                    ),
+                    )
+                    .with_system(move_bullet.label(Systems::MoveBullet)),
             ),
         )
         .register_rollback_type::<Transform>()
@@ -261,9 +263,16 @@ fn fire_bullets(
                     },
                     ..Default::default()
                 })
+                .insert(Bullet)
                 .insert(Rollback::new(rip.next_id()));
             bullet_ready.0 = false;
         }
+    }
+}
+
+fn move_bullet(mut query: Query<&mut Transform, With<Bullet>>) {
+    for mut transform in query.iter_mut() {
+        transform.translation.x += 0.1;
     }
 }
 
