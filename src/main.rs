@@ -1,14 +1,11 @@
 use bevy::{camera::ScalingMode, prelude::*};
 use bevy_ggrs::*;
 use bevy_matchbox::prelude::*;
+use components::*;
 use input::*;
 
+mod components;
 mod input;
-
-#[derive(Component)]
-struct Player {
-    handle: usize,
-}
 
 // The first generic parameter, u8, is the input type: 4-directions + fire fits
 // easily in a single byte
