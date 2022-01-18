@@ -172,22 +172,24 @@ fn move_players(
 
         let move_speed = 7.;
         let move_delta = direction * move_speed * time.delta_seconds();
-        transform.translation += move_delta.extend(0.);
+
+        let old_pos = transform.translation.xy();
+        let limit = Vec2::splat(MAP_SIZE as f32 / 2. - 0.5);
+        let new_pos = (old_pos + move_delta).clamp(-limit, limit);
+
+        transform.translation.x = new_pos.x;
+        transform.translation.y = new_pos.y;
     }
 }
 
 fn camera_follow(
-    player_handle: Option<Res<LocalPlayerHandle>>,
+    local_players: Res<LocalPlayers>,
     players: Query<(&Player, &Transform)>,
     mut cameras: Query<&mut Transform, (With<Camera>, Without<Player>)>,
 ) {
-    let player_handle = match player_handle {
-        Some(handle) => handle.0,
-        None => return, // Session hasn't started yet
-    };
-
     for (player, player_transform) in &players {
-        if player.handle != player_handle {
+        // only follow the local player
+        if !local_players.0.contains(&player.handle) {
             continue;
         }
 
