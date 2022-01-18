@@ -18,6 +18,13 @@ enum GameState {
 
 struct LocalPlayerHandle(usize);
 
+#[derive(SystemLabel, Debug, Clone, Hash, Eq, PartialEq)]
+enum Systems {
+    Move,
+    Reload,
+    Fire,
+}
+
 fn main() {
     let mut app = App::new();
 
@@ -27,6 +34,7 @@ fn main() {
         .build(&mut app);
 
     app.add_state(GameState::AssetLoading)
+        // .insert_resource(bevy::ecs::schedule::ReportExecutionOrderAmbiguities)
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_plugins(DefaultPlugins)
         .add_plugin(GGRSPlugin)
@@ -35,9 +43,14 @@ fn main() {
             Schedule::default().with_stage(
                 "ROLLBACK_STAGE",
                 SystemStage::single_threaded()
-                    .with_system(move_players)
-                    .with_system(reload_bullet)
-                    .with_system(fire_bullets),
+                    .with_system(move_players.label(Systems::Move))
+                    .with_system(reload_bullet.label(Systems::Reload))
+                    .with_system(
+                        fire_bullets
+                            .label(Systems::Fire)
+                            .after(Systems::Move)
+                            .after(Systems::Reload),
+                    ),
             ),
         )
         .register_rollback_type::<Transform>()
