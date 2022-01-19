@@ -29,6 +29,9 @@ enum GameState {
 
 struct LocalPlayerHandle(usize);
 
+#[derive(Default)]
+struct InterludeTimer(usize);
+
 fn main() {
     let mut app = App::new();
 
@@ -39,6 +42,16 @@ fn main() {
                 "ROLLBACK_STAGE",
                 SystemStage::single_threaded()
                     .with_system_set(State::<GameState>::get_driver())
+                    .with_system_set(
+                        SystemSet::on_enter(GameState::Interlude)
+                            .with_system(reset_interlude_timer),
+                    )
+                    .with_system_set(
+                        SystemSet::on_update(GameState::Interlude).with_system(interlude_timer),
+                    )
+                    .with_system_set(
+                        SystemSet::on_enter(GameState::InGame).with_system(spawn_players),
+                    )
                     .with_system_set(
                         SystemSet::on_update(GameState::InGame)
                             .with_system(move_players)
@@ -66,6 +79,7 @@ fn main() {
             fit_canvas_to_parent: true,
             ..default()
         })
+        .init_resource::<InterludeTimer>()
         .add_plugins(DefaultPlugins)
         .add_system_set(
             SystemSet::on_enter(GameState::Matchmaking)
@@ -73,7 +87,6 @@ fn main() {
                 .with_system(setup),
         )
         .add_system_set(SystemSet::on_update(GameState::Matchmaking).with_system(wait_for_players))
-        .add_system_set(SystemSet::on_enter(GameState::InGame).with_system(spawn_players))
         .add_system_set(SystemSet::on_update(GameState::InGame).with_system(camera_follow))
         .run();
 }
@@ -85,6 +98,18 @@ const GRID_WIDTH: f32 = 0.05;
 struct ImageAssets {
     #[asset(path = "bullet.png")]
     bullet: Handle<Image>,
+}
+
+fn reset_interlude_timer(mut timer: ResMut<InterludeTimer>) {
+    timer.0 = 60 * 1;
+}
+
+fn interlude_timer(mut timer: ResMut<InterludeTimer>, mut state: ResMut<State<GameState>>) {
+    if timer.0 == 0 {
+        state.set(GameState::InGame).unwrap();
+    } else {
+        timer.0 -= 1;
+    }
 }
 
 fn setup(mut commands: Commands) {
@@ -127,8 +152,20 @@ fn setup(mut commands: Commands) {
     commands.spawn_bundle(camera_bundle);
 }
 
-fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
+fn spawn_players(
+    mut commands: Commands,
+    mut rip: ResMut<RollbackIdProvider>,
+    player_query: Query<Entity, With<Player>>,
+    bullet_query: Query<Entity, With<Bullet>>,
+) {
     info!("Spawning players");
+
+    for player in player_query.iter() {
+        commands.entity(player).despawn_recursive();
+    }
+    for bullet in bullet_query.iter() {
+        commands.entity(bullet).despawn_recursive();
+    }
 
     // Player 1
     commands
@@ -179,6 +216,7 @@ fn wait_for_players(
     mut commands: Commands,
     mut socket: ResMut<Option<WebRtcSocket>>,
     mut state: ResMut<State<GameState>>,
+    mut interlude_timer: ResMut<InterludeTimer>,
 ) {
     let socket = socket.as_mut();
 
@@ -224,7 +262,8 @@ fn wait_for_players(
     commands.insert_resource(session);
     commands.insert_resource(SessionType::P2PSession);
 
-    state.set(GameState::InGame).unwrap();
+    interlude_timer.0 = 3 * 60;
+    state.set(GameState::Interlude).unwrap();
 }
 
 fn move_players(
