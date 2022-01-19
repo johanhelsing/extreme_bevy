@@ -24,6 +24,7 @@ enum GameState {
     AssetLoading,
     Matchmaking,
     InGame,
+    Interlude,
 }
 
 struct LocalPlayerHandle(usize);
@@ -37,11 +38,15 @@ fn main() {
             Schedule::default().with_stage(
                 "ROLLBACK_STAGE",
                 SystemStage::single_threaded()
-                    .with_system(move_players)
-                    .with_system(reload_bullet)
-                    .with_system(fire_bullets.after(move_players).after(reload_bullet))
-                    .with_system(move_bullet)
-                    .with_system(kill_players.after(move_bullet).after(move_players)),
+                    .with_system_set(State::<GameState>::get_driver())
+                    .with_system_set(
+                        SystemSet::on_update(GameState::InGame)
+                            .with_system(move_players)
+                            .with_system(reload_bullet)
+                            .with_system(fire_bullets.after(move_players).after(reload_bullet))
+                            .with_system(move_bullet)
+                            .with_system(kill_players.after(move_bullet).after(move_players)),
+                    ),
             ),
         )
         .register_rollback_type::<Transform>()
@@ -303,6 +308,7 @@ const BULLET_RADIUS: f32 = 0.025;
 
 fn kill_players(
     mut commands: Commands,
+    mut state: ResMut<State<GameState>>,
     player_query: Query<(Entity, &Transform), (With<Player>, Without<Bullet>)>,
     bullet_query: Query<&Transform, With<Bullet>>,
 ) {
@@ -314,6 +320,7 @@ fn kill_players(
             );
             if distance < PLAYER_RADIUS + BULLET_RADIUS {
                 commands.entity(player).despawn_recursive();
+                let _ = state.set(GameState::Interlude);
             }
         }
     }
