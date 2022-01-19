@@ -71,6 +71,7 @@ fn main() {
                 reload_bullet,
                 fire_bullets.after(move_players).after(reload_bullet),
                 move_bullet.after(fire_bullets),
+                kill_players.after(move_bullet).after(move_players),
             ),
         )
         .run();
@@ -290,6 +291,27 @@ fn move_bullet(mut bullets: Query<(&mut Transform, &MoveDir), With<Bullet>>) {
     for (mut transform, dir) in &mut bullets {
         let delta = (dir.0 * 0.35).extend(0.);
         transform.translation += delta;
+    }
+}
+
+const PLAYER_RADIUS: f32 = 0.5;
+const BULLET_RADIUS: f32 = 0.025;
+
+fn kill_players(
+    mut commands: Commands,
+    players: Query<(Entity, &Transform), (With<Player>, Without<Bullet>)>,
+    bullets: Query<&Transform, With<Bullet>>,
+) {
+    for (player, player_transform) in &players {
+        for bullet_transform in &bullets {
+            let distance = Vec2::distance(
+                player_transform.translation.xy(),
+                bullet_transform.translation.xy(),
+            );
+            if distance < PLAYER_RADIUS + BULLET_RADIUS {
+                commands.entity(player).despawn_recursive();
+            }
+        }
     }
 }
 
