@@ -48,7 +48,8 @@ fn main() {
             GgrsPlugin::<GgrsConfig>::new()
                 .with_input_system(input)
                 .register_rollback_component::<Transform>()
-                .register_rollback_component::<BulletReady>(),
+                .register_rollback_component::<BulletReady>()
+                .register_rollback_component::<MoveDir>(),
         )
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_systems(
@@ -132,6 +133,7 @@ fn spawn_players(mut commands: Commands) {
         .spawn((
             Player { handle: 0 },
             BulletReady(true),
+            MoveDir(-Vec2::X),
             SpriteBundle {
                 transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
                 sprite: Sprite {
@@ -149,6 +151,7 @@ fn spawn_players(mut commands: Commands) {
         .spawn((
             Player { handle: 1 },
             BulletReady(true),
+            MoveDir(-Vec2::X),
             SpriteBundle {
                 transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
                 sprite: Sprite {
@@ -217,15 +220,17 @@ fn wait_for_players(
 
 fn move_players(
     inputs: Res<PlayerInputs<GgrsConfig>>,
-    mut player_query: Query<(&mut Transform, &Player)>,
+    mut player_query: Query<(&mut Transform, &mut MoveDir, &Player)>,
 ) {
-    for (mut transform, player) in player_query.iter_mut() {
+    for (mut transform, mut move_direction, player) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
         let direction = direction(input);
 
         if direction == Vec2::ZERO {
             continue;
         }
+
+        move_direction.0 = direction;
 
         let move_speed = 0.13;
         let move_delta = direction * move_speed;
@@ -255,14 +260,15 @@ fn fire_bullets(
     mut commands: Commands,
     inputs: Res<PlayerInputs<GgrsConfig>>,
     images: Res<ImageAssets>,
-    mut player_query: Query<(&Transform, &Player, &mut BulletReady)>,
+    mut player_query: Query<(&Transform, &Player, &mut BulletReady, &MoveDir)>,
 ) {
-    for (transform, player, mut bullet_ready) in player_query.iter_mut() {
+    for (transform, player, mut bullet_ready, move_dir) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
             commands
                 .spawn((
                     Bullet,
+                    *move_dir,
                     SpriteBundle {
                         transform: Transform::from_translation(transform.translation),
                         texture: images.bullet.clone(),
