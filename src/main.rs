@@ -65,6 +65,7 @@ fn main() {
                 reload_bullet,
                 fire_bullets.after(move_players).after(reload_bullet),
                 move_bullet.after(fire_bullets),
+                kill_players.after(move_bullet).after(move_players),
             )
                 .in_schedule(GGRSSchedule),
         )
@@ -283,6 +284,27 @@ fn move_bullet(mut query: Query<(&mut Transform, &MoveDir), With<Bullet>>) {
     for (mut transform, dir) in query.iter_mut() {
         let delta = (dir.0 * 0.35).extend(0.);
         transform.translation += delta;
+    }
+}
+
+const PLAYER_RADIUS: f32 = 0.5;
+const BULLET_RADIUS: f32 = 0.025;
+
+fn kill_players(
+    mut commands: Commands,
+    player_query: Query<(Entity, &Transform), (With<Player>, Without<Bullet>)>,
+    bullet_query: Query<&Transform, With<Bullet>>,
+) {
+    for (player, player_transform) in player_query.iter() {
+        for bullet_transform in bullet_query.iter() {
+            let distance = Vec2::distance(
+                player_transform.translation.xy(),
+                bullet_transform.translation.xy(),
+            );
+            if distance < PLAYER_RADIUS + BULLET_RADIUS {
+                commands.entity(player).despawn_recursive();
+            }
+        }
     }
 }
 
