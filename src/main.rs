@@ -286,9 +286,10 @@ fn fire_bullets(
     }
 }
 
-fn move_bullet(mut bullets: Query<&mut Transform, With<Bullet>>) {
-    for mut transform in &mut bullets {
-        transform.translation.x += 0.1;
+fn move_bullet(mut bullets: Query<(&mut Transform, &MoveDir), With<Bullet>>) {
+    for (mut transform, dir) in &mut bullets {
+        let delta = (dir.0 * 0.35).extend(0.);
+        transform.translation += delta;
     }
 }
 
