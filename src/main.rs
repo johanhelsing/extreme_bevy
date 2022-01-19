@@ -57,6 +57,7 @@ fn main() {
         )
         .register_rollback_type::<Transform>()
         .register_rollback_type::<BulletReady>()
+        .register_rollback_type::<MoveDir>()
         .add_system_set(
             SystemSet::on_enter(GameState::Matchmaking)
                 .with_system(start_matchbox_socket)
@@ -133,6 +134,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
         })
         .insert(Player { handle: 0 })
         .insert(BulletReady(true))
+        .insert(MoveDir(-Vec2::X))
         .insert(Rollback::new(rip.next_id()));
 
     // Player 2
@@ -148,6 +150,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
         })
         .insert(Player { handle: 1 })
         .insert(BulletReady(true))
+        .insert(MoveDir(Vec2::X))
         .insert(Rollback::new(rip.next_id()));
 }
 
@@ -215,14 +218,16 @@ fn wait_for_players(
 
 fn move_players(
     inputs: Res<Vec<ggrs::GameInput>>,
-    mut player_query: Query<(&mut Transform, &Player)>,
+    mut player_query: Query<(&mut Transform, &mut MoveDir, &Player)>,
 ) {
-    for (mut transform, player) in player_query.iter_mut() {
+    for (mut transform, mut move_direction, player) in player_query.iter_mut() {
         let direction = direction(&inputs[player.handle]);
 
         if direction == Vec2::ZERO {
             continue;
         }
+
+        move_direction.0 = direction;
 
         let move_speed = 0.13;
         let move_delta = direction * move_speed;
@@ -248,14 +253,15 @@ fn fire_bullets(
     mut commands: Commands,
     inputs: Res<Vec<ggrs::GameInput>>,
     images: Res<ImageAssets>,
-    mut player_query: Query<(&Transform, &Player, &mut BulletReady)>,
+    mut player_query: Query<(&Transform, &Player, &mut BulletReady, &MoveDir)>,
     mut rip: ResMut<RollbackIdProvider>,
 ) {
-    for (transform, player, mut bullet_ready) in player_query.iter_mut() {
+    for (transform, player, mut bullet_ready, move_dir) in player_query.iter_mut() {
         if fire(&inputs[player.handle]) && bullet_ready.0 {
             commands
                 .spawn_bundle(SpriteBundle {
-                    transform: Transform::from_translation(transform.translation),
+                    transform: Transform::from_translation(transform.translation)
+                        .with_rotation(Quat::from_rotation_arc_2d(Vec2::X, move_dir.0)),
                     texture: images.bullet.clone(),
                     sprite: Sprite {
                         custom_size: Some(Vec2::new(0.3, 0.1)),
@@ -263,6 +269,7 @@ fn fire_bullets(
                     },
                     ..Default::default()
                 })
+                .insert(*move_dir)
                 .insert(Bullet)
                 .insert(Rollback::new(rip.next_id()));
             bullet_ready.0 = false;
