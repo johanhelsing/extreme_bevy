@@ -265,9 +265,11 @@ fn fire_bullets(
     for (transform, player, mut bullet_ready, move_dir) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
+            let player_pos = transform.translation.xy();
+            let pos = player_pos + move_dir.0 * PLAYER_RADIUS + BULLET_RADIUS;
             commands
                 .spawn_bundle(SpriteBundle {
-                    transform: Transform::from_translation(transform.translation)
+                    transform: Transform::from_translation(pos.extend(200.))
                         .with_rotation(Quat::from_rotation_arc_2d(Vec2::X, move_dir.0)),
                     texture: images.bullet.clone(),
                     sprite: Sprite {
