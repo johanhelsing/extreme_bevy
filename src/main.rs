@@ -45,6 +45,7 @@ fn main() {
         )
         .rollback_component_with_clone::<Transform>()
         .rollback_component_with_copy::<BulletReady>()
+        .rollback_component_with_copy::<MoveDir>()
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(
             OnEnter(GameState::Matchmaking),
@@ -125,6 +126,7 @@ fn spawn_players(mut commands: Commands) {
             Player { handle: 0 },
             Transform::from_translation(Vec3::new(-2., 0., 100.)),
             BulletReady(true),
+            MoveDir(-Vec2::X),
             Sprite {
                 color: Color::srgb(0., 0.47, 1.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -139,6 +141,7 @@ fn spawn_players(mut commands: Commands) {
             Player { handle: 1 },
             Transform::from_translation(Vec3::new(2., 0., 100.)),
             BulletReady(true),
+            MoveDir(-Vec2::X),
             Sprite {
                 color: Color::srgb(0., 0.4, 0.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -198,11 +201,11 @@ fn wait_for_players(
 }
 
 fn move_players(
-    mut players: Query<(&mut Transform, &Player)>,
+    mut players: Query<(&mut Transform, &mut MoveDir, &Player)>,
     inputs: Res<PlayerInputs<Config>>,
     time: Res<Time>,
 ) {
-    for (mut transform, player) in &mut players {
+    for (mut transform, mut move_direction, player) in &mut players {
         let (input, _) = inputs[player.handle];
 
         let direction = direction(input);
@@ -210,6 +213,8 @@ fn move_players(
         if direction == Vec2::ZERO {
             continue;
         }
+
+        move_direction.0 = direction;
 
         let move_speed = 7.;
         let move_delta = direction * move_speed * time.delta_secs();
@@ -239,15 +244,16 @@ fn fire_bullets(
     mut commands: Commands,
     inputs: Res<PlayerInputs<Config>>,
     images: Res<ImageAssets>,
-    mut players: Query<(&Transform, &Player, &mut BulletReady)>,
+    mut players: Query<(&Transform, &Player, &mut BulletReady, &MoveDir)>,
 ) {
-    for (transform, player, mut bullet_ready) in &mut players {
+    for (transform, player, mut bullet_ready, move_dir) in &mut players {
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
             commands
                 .spawn((
                     Bullet,
                     Transform::from_translation(transform.translation),
+                    *move_dir,
                     Sprite {
                         image: images.bullet.clone(),
                         custom_size: Some(Vec2::new(0.3, 0.1)),
