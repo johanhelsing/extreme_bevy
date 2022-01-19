@@ -250,10 +250,12 @@ fn fire_bullets(
     for (transform, player, mut bullet_ready, move_dir) in &mut players {
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
+            let player_pos = transform.translation.xy();
+            let pos = player_pos + move_dir.0 * PLAYER_RADIUS + BULLET_RADIUS;
             commands
                 .spawn((
                     Bullet,
-                    Transform::from_translation(transform.translation)
+                    Transform::from_translation(pos.extend(200.))
                         .with_rotation(Quat::from_rotation_arc_2d(Vec2::X, move_dir.0)),
                     *move_dir,
                     Sprite {
