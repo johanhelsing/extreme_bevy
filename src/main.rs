@@ -277,10 +277,11 @@ fn fire_bullets(
     }
 }
 
-fn move_bullet(mut bullets: Query<&mut Transform, With<Bullet>>, time: Res<Time>) {
-    for mut transform in &mut bullets {
-        let speed = 1.;
-        transform.translation.x += speed * time.delta_seconds();
+fn move_bullet(mut bullets: Query<(&mut Transform, &MoveDir), With<Bullet>>, time: Res<Time>) {
+    for (mut transform, dir) in &mut bullets {
+        let speed = 20.;
+        let delta = dir.0 * speed * time.delta_seconds();
+        transform.translation += delta.extend(0.);
     }
 }
 
