@@ -24,6 +24,7 @@ enum Systems {
     Reload,
     Fire,
     MoveBullet,
+    Kill,
 }
 
 fn main() {
@@ -52,7 +53,13 @@ fn main() {
                             .after(Systems::Move)
                             .after(Systems::Reload),
                     )
-                    .with_system(move_bullet.label(Systems::MoveBullet)),
+                    .with_system(move_bullet.label(Systems::MoveBullet))
+                    .with_system(
+                        kill_players
+                            .label(Systems::Kill)
+                            .after(Systems::Move)
+                            .after(Systems::MoveBullet),
+                    ),
             ),
         )
         .register_rollback_type::<Transform>()
@@ -281,6 +288,27 @@ fn move_bullet(mut query: Query<(&mut Transform, &MoveDir), With<Bullet>>) {
     for (mut transform, dir) in query.iter_mut() {
         let delta = (dir.0 * 0.35).extend(0.);
         transform.translation += delta;
+    }
+}
+
+const PLAYER_RADIUS: f32 = 0.5;
+const BULLET_RADIUS: f32 = 0.025;
+
+fn kill_players(
+    mut commands: Commands,
+    player_query: Query<(Entity, &Transform), (With<Player>, Without<Bullet>)>,
+    bullet_query: Query<&Transform, With<Bullet>>,
+) {
+    for (player, player_transform) in player_query.iter() {
+        for bullet_transform in bullet_query.iter() {
+            let distance = Vec2::distance(
+                player_transform.translation.xy(),
+                bullet_transform.translation.xy(),
+            );
+            if distance < PLAYER_RADIUS + BULLET_RADIUS {
+                commands.entity(player).despawn_recursive();
+            }
+        }
     }
 }
 
