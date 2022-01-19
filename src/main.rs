@@ -50,6 +50,7 @@ fn main() {
         )
         .register_rollback_component::<Transform>()
         .register_rollback_component::<BulletReady>()
+        .register_rollback_component::<MoveDir>()
         .build(&mut app);
 
     app.add_state(GameState::AssetLoading)
@@ -135,6 +136,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
     commands.spawn((
         Player { handle: 0 },
         BulletReady(true),
+        MoveDir(-Vec2::X),
         Rollback::new(rip.next_id()),
         SpriteBundle {
             transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
@@ -151,6 +153,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
     commands.spawn((
         Player { handle: 1 },
         BulletReady(true),
+        MoveDir(Vec2::X),
         Rollback::new(rip.next_id()),
         SpriteBundle {
             transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
@@ -228,15 +231,17 @@ fn wait_for_players(
 
 fn move_players(
     inputs: Res<PlayerInputs<GgrsConfig>>,
-    mut player_query: Query<(&mut Transform, &Player)>,
+    mut player_query: Query<(&mut Transform, &mut MoveDir, &Player)>,
 ) {
-    for (mut transform, player) in player_query.iter_mut() {
+    for (mut transform, mut move_direction, player) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
         let direction = direction(input);
 
         if direction == Vec2::ZERO {
             continue;
         }
+
+        move_direction.0 = direction;
 
         let move_speed = 0.13;
         let move_delta = direction * move_speed;
@@ -266,17 +271,19 @@ fn fire_bullets(
     mut commands: Commands,
     inputs: Res<PlayerInputs<GgrsConfig>>,
     images: Res<ImageAssets>,
-    mut player_query: Query<(&Transform, &Player, &mut BulletReady)>,
+    mut player_query: Query<(&Transform, &Player, &mut BulletReady, &MoveDir)>,
     mut rip: ResMut<RollbackIdProvider>,
 ) {
-    for (transform, player, mut bullet_ready) in player_query.iter_mut() {
+    for (transform, player, mut bullet_ready, move_dir) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
             commands.spawn((
                 Bullet,
                 Rollback::new(rip.next_id()),
+                *move_dir,
                 SpriteBundle {
-                    transform: Transform::from_translation(transform.translation),
+                    transform: Transform::from_translation(transform.translation)
+                        .with_rotation(Quat::from_rotation_arc_2d(Vec2::X, move_dir.0)),
                     texture: images.bullet.clone(),
                     sprite: Sprite {
                         custom_size: Some(Vec2::new(0.3, 0.1)),
