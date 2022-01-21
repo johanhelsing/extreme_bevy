@@ -1,2 +1,5 @@
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"
+
+[build]
+target = "wasm32-unknown-unknown"
