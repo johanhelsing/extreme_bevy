@@ -16,6 +16,6 @@ I intend to keep the git history of this repo as clean as possible. That means t
 
 ## License
 
-This project is licensed under [CC0 1.0 Universal](LICENSE), except some of the contents of the [`assets`](assets) directory, see the corresponding .txt file for each assets.
+This project is licensed under [CC0 1.0 Universal](LICENSE), except some of the contents of the [`assets`](assets) directory, see the corresponding .txt file for each asset.
 
 I'd be happy to hear if you found it useful or made anything with it! [@jkhelsing](https://twitter.com/jkhelsing).
