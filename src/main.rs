@@ -5,6 +5,7 @@ use components::*;
 use ggrs::PlayerType;
 use input::*;
 use matchbox_socket::WebRtcNonBlockingSocket;
+use rand::prelude::*;
 
 mod components;
 mod input;
@@ -31,6 +32,10 @@ enum Systems {
 #[derive(Default)]
 struct InterludeTimer(usize);
 
+#[derive(Reflect, Default, Clone, Copy, Component, Hash)]
+#[reflect(Hash)]
+struct Scores(usize, usize);
+
 fn main() {
     let mut app = App::new();
 
@@ -43,6 +48,7 @@ fn main() {
         // .insert_resource(bevy::ecs::schedule::ReportExecutionOrderAmbiguities)
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .init_resource::<InterludeTimer>()
+        .init_resource::<Scores>()
         .add_plugins(DefaultPlugins)
         .add_plugin(GGRSPlugin)
         .with_input_system(input)
@@ -84,6 +90,7 @@ fn main() {
         .register_rollback_type::<Transform>()
         .register_rollback_type::<BulletReady>()
         .register_rollback_type::<MoveDir>()
+        .register_rollback_type::<Scores>()
         .add_system_set(
             SystemSet::on_enter(GameState::Matchmaking)
                 .with_system(start_matchbox_socket)
@@ -91,7 +98,30 @@ fn main() {
         )
         .add_system_set(SystemSet::on_update(GameState::Matchmaking).with_system(wait_for_players))
         .add_system_set(SystemSet::on_update(GameState::InGame).with_system(camera_follow))
+        .add_system(update_score_ui)
+        .add_system(update_window_size)
         .run();
+}
+
+fn update_window_size(mut windows: ResMut<Windows>) {
+    //See: https://github.com/rust-windowing/winit/issues/1491
+    // TODO: use window resize event instead of polling
+    use approx::relative_eq;
+    let web_window = web_sys::window().unwrap();
+    let width = web_window.inner_width().unwrap().as_f64().unwrap() as f32 - 30.;
+    let height = web_window.inner_height().unwrap().as_f64().unwrap() as f32 - 30.;
+
+    let window = windows.get_primary_mut().unwrap();
+    if relative_eq!(width, window.width()) && relative_eq!(height, window.height()) {
+        return;
+    }
+
+    info!(
+        "resizing canvas {:?}, old size {:?}",
+        (width, height),
+        (window.width(), window.height())
+    );
+    window.set_resolution(width, height);
 }
 
 const MAP_SIZE: i32 = 41;
@@ -115,7 +145,7 @@ fn interlude_timer(mut timer: ResMut<InterludeTimer>, mut state: ResMut<State<Ga
     }
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Horizontal lines
     for i in 0..=MAP_SIZE {
         commands.spawn_bundle(SpriteBundle {
@@ -152,7 +182,44 @@ fn setup(mut commands: Commands) {
 
     let mut camera_bundle = OrthographicCameraBundle::new_2d();
     camera_bundle.orthographic_projection.scale = 1. / 50.;
-    commands.spawn_bundle(camera_bundle);
+    commands.spawn_bundle(camera_bundle).insert(FollowCamera);
+
+    // UI camera
+    commands.spawn_bundle(UiCameraBundle::default());
+    // Text with one section
+    commands.spawn_bundle(TextBundle {
+        style: Style {
+            align_self: AlignSelf::FlexEnd,
+            position_type: PositionType::Absolute,
+            position: Rect {
+                bottom: Val::Px(5.0),
+                right: Val::Px(15.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        // Use the `Text::with_section` constructor
+        text: Text::with_section(
+            "0 - 0",
+            TextStyle {
+                font: asset_server.load("quicksand-light.ttf"),
+                font_size: 100.0,
+                color: Color::BLACK,
+            },
+            // Note: You can use `Default::default()` in place of the `TextAlignment`
+            TextAlignment {
+                horizontal: HorizontalAlign::Center,
+                ..Default::default()
+            },
+        ),
+        ..Default::default()
+    });
+}
+
+fn update_score_ui(scores: Res<Scores>, mut query: Query<&mut Text>) {
+    for mut text in query.iter_mut() {
+        text.sections[0].value = format!("{} - {}", scores.0, scores.1);
+    }
 }
 
 fn spawn_players(
@@ -160,6 +227,7 @@ fn spawn_players(
     mut rip: ResMut<RollbackIdProvider>,
     player_query: Query<Entity, With<Player>>,
     bullet_query: Query<Entity, With<Bullet>>,
+    score: Res<Scores>,
 ) {
     info!("Spawning players");
 
@@ -170,10 +238,17 @@ fn spawn_players(
         commands.entity(bullet).despawn_recursive();
     }
 
+    let seed = score.reflect_hash().unwrap();
+    let mut rng = StdRng::seed_from_u64(seed);
+    let half = MAP_SIZE as f32 / 2.0;
+    let range = -half..half;
+    let p1_pos = Vec2::new(rng.gen_range(range.clone()), rng.gen_range(range.clone()));
+    let p2_pos = Vec2::new(rng.gen_range(range.clone()), rng.gen_range(range.clone()));
+
     // Player 1
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
+            transform: Transform::from_translation(p1_pos.extend(100.)),
             sprite: Sprite {
                 color: Color::rgb(0., 0.47, 1.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -189,7 +264,7 @@ fn spawn_players(
     // Player 2
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
+            transform: Transform::from_translation(p2_pos.extend(100.)),
             sprite: Sprite {
                 color: Color::rgb(0., 0.4, 0.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -263,7 +338,7 @@ fn wait_for_players(
     // start the GGRS session
     commands.start_p2p_session(p2p_session);
 
-    interlude_timer.0 = 3 * 60;
+    interlude_timer.0 = 1 * 60;
     state.set(GameState::Interlude).unwrap();
 }
 
@@ -343,18 +418,24 @@ const BULLET_RADIUS: f32 = 0.025;
 fn kill_players(
     mut commands: Commands,
     mut state: ResMut<State<GameState>>,
-    player_query: Query<(Entity, &Transform), (With<Player>, Without<Bullet>)>,
+    mut scores: ResMut<Scores>,
+    player_query: Query<(Entity, &Transform, &Player), (Without<Bullet>)>,
     bullet_query: Query<&Transform, With<Bullet>>,
 ) {
-    for (player, player_transform) in player_query.iter() {
+    for (player_entity, player_transform, player) in player_query.iter() {
         for bullet_transform in bullet_query.iter() {
             let distance = Vec2::distance(
                 player_transform.translation.xy(),
                 bullet_transform.translation.xy(),
             );
             if distance < PLAYER_RADIUS + BULLET_RADIUS {
-                commands.entity(player).despawn_recursive();
+                commands.entity(player_entity).despawn_recursive();
                 let _ = state.set(GameState::Interlude);
+                if player.handle == 0 {
+                    scores.1 += 1;
+                } else {
+                    scores.0 += 1;
+                };
             }
         }
     }
@@ -363,7 +444,7 @@ fn kill_players(
 fn camera_follow(
     player_handle: Option<Res<LocalPlayerHandle>>,
     player_query: Query<(&Player, &Transform)>,
-    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+    mut camera_query: Query<&mut Transform, (With<FollowCamera>, Without<Player>)>,
 ) {
     let player_handle = match player_handle {
         Some(handle) => handle.0,

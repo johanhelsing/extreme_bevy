@@ -1342,11 +1342,14 @@ checksum = "77f3309417938f28bf8228fcff79a4a37103981e3e186d2ccd19c74b38f4eb71"
 name = "extreme_bevy"
 version = "0.1.0"
 dependencies = [
+ "approx",
  "bevy",
  "bevy_asset_loader",
  "bevy_ggrs",
  "ggrs",
  "matchbox_socket",
+ "rand",
+ "web-sys",
 ]
 
 [[package]]
