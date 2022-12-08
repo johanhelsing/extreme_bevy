@@ -58,6 +58,7 @@ fn main() {
                 .continue_to_state(GameState::Matchmaking),
         )
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+        // .insert_resource(bevy::ecs::schedule::ReportExecutionOrderAmbiguities)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             window: WindowDescriptor {
                 // fill the entire browser window
