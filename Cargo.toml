@@ -7,3 +7,4 @@ edition = "2021"
 bevy = "0.10"
 bevy_ggrs = { version = "0.12", features = ["wasm-bindgen"] }
 bevy_matchbox = { git = "https://github.com/johanhelsing/matchbox", features = ["ggrs"], branch = "bevy-simple-convenience" }
+bevy_asset_loader = "0.15"
