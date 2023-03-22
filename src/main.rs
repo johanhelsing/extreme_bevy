@@ -51,10 +51,11 @@ fn main() {
             ..default()
         }))
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
-        .add_startup_systems((setup, spawn_players, start_matchbox_socket))
+        .add_systems((setup, start_matchbox_socket).in_schedule(OnEnter(GameState::Matchmaking)))
         .add_systems((
-            wait_for_players,
-            camera_follow,
+            wait_for_players.run_if(in_state(GameState::Matchmaking)),
+            spawn_players.in_schedule(OnEnter(GameState::InGame)),
+            camera_follow.run_if(in_state(GameState::InGame)),
             move_players.in_schedule(GGRSSchedule),
         ))
         .run();
@@ -147,7 +148,11 @@ fn start_matchbox_socket(mut commands: Commands) {
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }
 
-fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocket<SingleChannel>>) {
+fn wait_for_players(
+    mut commands: Commands,
+    mut socket: ResMut<MatchboxSocket<SingleChannel>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
     if socket.get_channel(0).is_err() {
         return; // we've already started
     }
@@ -187,6 +192,7 @@ fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocket<Si
         .expect("failed to start session");
 
     commands.insert_resource(bevy_ggrs::Session::P2PSession(ggrs_session));
+    next_state.set(GameState::InGame);
 }
 
 fn move_players(
