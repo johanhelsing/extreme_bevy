@@ -114,6 +114,8 @@ fn setup(mut commands: Commands) {
 }
 
 fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
+    info!("Spawning players");
+
     // Player 1
     commands.spawn((
         Player { handle: 0 },
