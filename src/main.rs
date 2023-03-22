@@ -40,8 +40,9 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_startup_systems((setup, spawn_players, start_matchbox_socket))
         .add_systems((
-            move_players.in_schedule(GGRSSchedule),
             wait_for_players.run_if(resource_exists::<MatchboxSocket<SingleChannel>>()),
+            camera_follow,
+            move_players.in_schedule(GGRSSchedule),
         ))
         .run();
 }
@@ -148,5 +149,29 @@ fn move_players(
         let move_delta = (direction * move_speed).extend(0.);
 
         transform.translation += move_delta;
+    }
+}
+
+fn camera_follow(
+    player_handle: Option<Res<LocalPlayerHandle>>,
+    player_query: Query<(&Player, &Transform)>,
+    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+) {
+    let player_handle = match player_handle {
+        Some(handle) => handle.0,
+        None => return, // Session hasn't started yet
+    };
+
+    for (player, player_transform) in player_query.iter() {
+        if player.handle != player_handle {
+            continue;
+        }
+
+        let pos = player_transform.translation;
+
+        for mut transform in camera_query.iter_mut() {
+            transform.translation.x = pos.x;
+            transform.translation.y = pos.y;
+        }
     }
 }
