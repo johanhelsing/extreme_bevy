@@ -47,7 +47,8 @@ fn main() {
         .add_ggrs_plugin(
             GgrsPlugin::<GgrsConfig>::new()
                 .with_input_system(input)
-                .register_rollback_component::<Transform>(),
+                .register_rollback_component::<Transform>()
+                .register_rollback_component::<BulletReady>(),
         )
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_systems(
@@ -64,7 +65,11 @@ fn main() {
         )
         .add_systems(
             GgrsSchedule,
-            (move_players, fire_bullets.after(move_players)),
+            (
+                move_players,
+                reload_bullet,
+                fire_bullets.after(move_players).after(reload_bullet),
+            ),
         )
         .run();
 }
@@ -125,6 +130,7 @@ fn spawn_players(mut commands: Commands) {
     commands
         .spawn((
             Player { handle: 0 },
+            BulletReady(true),
             SpriteBundle {
                 transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
                 sprite: Sprite {
@@ -141,6 +147,7 @@ fn spawn_players(mut commands: Commands) {
     commands
         .spawn((
             Player { handle: 1 },
+            BulletReady(true),
             SpriteBundle {
                 transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
                 sprite: Sprite {
@@ -231,24 +238,39 @@ fn move_players(
     }
 }
 
+fn reload_bullet(
+    inputs: Res<PlayerInputs<GgrsConfig>>,
+    mut query: Query<(&mut BulletReady, &Player)>,
+) {
+    for (mut can_fire, player) in query.iter_mut() {
+        let (input, _) = inputs[player.handle];
+        if !fire(input) {
+            can_fire.0 = true;
+        }
+    }
+}
+
 fn fire_bullets(
     mut commands: Commands,
     inputs: Res<PlayerInputs<GgrsConfig>>,
     images: Res<ImageAssets>,
-    player_query: Query<(&Transform, &Player)>,
+    mut player_query: Query<(&Transform, &Player, &mut BulletReady)>,
 ) {
-    for (transform, player) in player_query.iter() {
+    for (transform, player, mut bullet_ready) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
-        if fire(input) {
-            commands.spawn(SpriteBundle {
-                transform: Transform::from_translation(transform.translation),
-                texture: images.bullet.clone(),
-                sprite: Sprite {
-                    custom_size: Some(Vec2::new(0.3, 0.1)),
+        if fire(input) && bullet_ready.0 {
+            commands
+                .spawn((SpriteBundle {
+                    transform: Transform::from_translation(transform.translation),
+                    texture: images.bullet.clone(),
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(0.3, 0.1)),
+                        ..default()
+                    },
                     ..default()
-                },
-                ..default()
-            });
+                },))
+                .add_rollback();
+            bullet_ready.0 = false;
         }
     }
 }
