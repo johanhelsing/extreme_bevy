@@ -47,7 +47,44 @@ fn main() {
         .run();
 }
 
+const MAP_SIZE: i32 = 41;
+const GRID_WIDTH: f32 = 0.05;
+
 fn setup(mut commands: Commands) {
+    // Horizontal lines
+    for i in 0..=MAP_SIZE {
+        commands.spawn(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(
+                0.,
+                i as f32 - MAP_SIZE as f32 / 2.,
+                0.,
+            )),
+            sprite: Sprite {
+                color: Color::rgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(MAP_SIZE as f32, GRID_WIDTH)),
+                ..default()
+            },
+            ..default()
+        });
+    }
+
+    // Vertical lines
+    for i in 0..=MAP_SIZE {
+        commands.spawn(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(
+                i as f32 - MAP_SIZE as f32 / 2.,
+                0.,
+                0.,
+            )),
+            sprite: Sprite {
+                color: Color::rgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(GRID_WIDTH, MAP_SIZE as f32)),
+                ..default()
+            },
+            ..default()
+        });
+    }
+
     let mut camera_bundle = Camera2dBundle::default();
     camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(10.);
     commands.spawn(camera_bundle);
@@ -59,7 +96,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
         Player { handle: 0 },
         rip.next(),
         SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(-2., 0., 0.)),
+            transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
             sprite: Sprite {
                 color: Color::rgb(0., 0.47, 1.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -74,7 +111,7 @@ fn spawn_players(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
         Player { handle: 1 },
         rip.next(),
         SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(2., 0., 0.)),
+            transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
             sprite: Sprite {
                 color: Color::rgb(0., 0.4, 0.),
                 custom_size: Some(Vec2::new(1., 1.)),
