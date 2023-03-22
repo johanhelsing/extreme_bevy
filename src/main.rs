@@ -31,7 +31,7 @@ fn main() {
         .rollback_component_with_clone::<Transform>()
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (setup, spawn_players, start_matchbox_socket))
-        .add_systems(Update, wait_for_players)
+        .add_systems(Update, (wait_for_players, camera_follow))
         .add_systems(ReadInputs, read_local_inputs)
         .add_systems(GgrsSchedule, move_players)
         .run();
@@ -138,5 +138,25 @@ fn move_players(
         let move_speed = 7.;
         let move_delta = direction * move_speed * time.delta_seconds();
         transform.translation += move_delta.extend(0.);
+    }
+}
+
+fn camera_follow(
+    local_players: Res<LocalPlayers>,
+    players: Query<(&Player, &Transform)>,
+    mut cameras: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+) {
+    for (player, player_transform) in &players {
+        // only follow the local player
+        if !local_players.0.contains(&player.handle) {
+            continue;
+        }
+
+        let pos = player_transform.translation;
+
+        for mut transform in &mut cameras {
+            transform.translation.x = pos.x;
+            transform.translation.y = pos.y;
+        }
     }
 }
