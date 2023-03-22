@@ -8,6 +8,7 @@ bevy = "0.10"
 bevy_ggrs = { git = "https://github.com/johanhelsing/bevy_ggrs", branch = "bevy-0.10-refactor", features = ["wasm-bindgen"] }
 bevy_matchbox = { git = "https://github.com/johanhelsing/matchbox" }
 matchbox_socket = { git = "https://github.com/johanhelsing/matchbox", features = ["ggrs"] }
+bevy_asset_loader = "0.15"
 
 [patch."https://github.com/gschup/ggrs"]
 ggrs = "0.9.3"
