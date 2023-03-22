@@ -10,3 +10,4 @@ opt-level = 2
 bevy = "0.17"
 bevy_ggrs = { version = "0.19", features = ["wasm-bindgen"] }
 bevy_matchbox = { version = "0.13", features = ["ggrs"] }
+bevy_asset_loader = "0.24.0-RC"
