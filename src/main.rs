@@ -1,4 +1,5 @@
 use bevy::{math::Vec3Swizzles, prelude::*, render::camera::ScalingMode};
+use bevy_asset_loader::prelude::*;
 use bevy_ggrs::{ggrs::PlayerType, *};
 use bevy_matchbox::prelude::*;
 use components::*;
@@ -17,6 +18,14 @@ impl ggrs::Config for GgrsConfig {
     type Address = PeerId;
 }
 
+#[derive(States, Clone, Eq, PartialEq, Debug, Hash, Default)]
+enum GameState {
+    #[default]
+    AssetLoading,
+    Matchmaking,
+    InGame,
+}
+
 #[derive(Resource)]
 struct LocalPlayerHandle(usize);
 
@@ -28,7 +37,11 @@ fn main() {
         .register_rollback_component::<Transform>()
         .build(&mut app);
 
-    app.insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+    app.add_state::<GameState>()
+        .add_loading_state(
+            LoadingState::new(GameState::AssetLoading).continue_to_state(GameState::Matchmaking),
+        )
+        .add_collection_to_loading_state::<_, ImageAssets>(GameState::AssetLoading)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 // fill the entire browser window
@@ -49,6 +62,12 @@ fn main() {
 
 const MAP_SIZE: i32 = 41;
 const GRID_WIDTH: f32 = 0.05;
+
+#[derive(AssetCollection, Resource)]
+struct ImageAssets {
+    #[asset(path = "bullet.png")]
+    bullet: Handle<Image>,
+}
 
 fn setup(mut commands: Commands) {
     // Horizontal lines
