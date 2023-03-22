@@ -1,4 +1,5 @@
 use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy_asset_loader::prelude::*;
 use bevy_ggrs::*;
 use bevy_matchbox::prelude::*;
 use components::*;
@@ -12,6 +13,14 @@ mod input;
 // The second parameter is the address type of peers: Matchbox' WebRtcSocket
 // addresses are called `PeerId`s
 type Config = bevy_ggrs::GgrsConfig<u8, PeerId>;
+
+#[derive(States, Clone, Eq, PartialEq, Debug, Hash, Default)]
+enum GameState {
+    #[default]
+    AssetLoading,
+    Matchmaking,
+    InGame,
+}
 
 fn main() {
     App::new()
@@ -28,6 +37,12 @@ fn main() {
             }),
             GgrsPlugin::<Config>::default(),
         ))
+        .init_state::<GameState>()
+        .add_loading_state(
+            LoadingState::new(GameState::AssetLoading)
+                .load_collection::<ImageAssets>()
+                .continue_to_state(GameState::Matchmaking),
+        )
         .rollback_component_with_clone::<Transform>()
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (setup, spawn_players, start_matchbox_socket))
@@ -39,6 +54,12 @@ fn main() {
 
 const MAP_SIZE: i32 = 41;
 const GRID_WIDTH: f32 = 0.05;
+
+#[derive(AssetCollection, Resource)]
+struct ImageAssets {
+    #[asset(path = "bullet.png")]
+    bullet: Handle<Image>,
+}
 
 fn setup(mut commands: Commands) {
     // Horizontal lines
