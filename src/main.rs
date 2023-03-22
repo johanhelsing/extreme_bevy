@@ -1,4 +1,5 @@
-use bevy::{prelude::*, render::camera::ScalingMode, utils::HashMap};
+use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy_asset_loader::prelude::*;
 use bevy_ggrs::*;
 use bevy_matchbox::prelude::*;
 use components::*;
@@ -13,8 +14,21 @@ mod input;
 // addresses are called `PeerId`s
 type Config = bevy_ggrs::GgrsConfig<u8, PeerId>;
 
+#[derive(States, Clone, Eq, PartialEq, Debug, Hash, Default)]
+enum GameState {
+    #[default]
+    AssetLoading,
+    Matchmaking,
+    InGame,
+}
+
 fn main() {
     App::new()
+        .add_state::<GameState>()
+        .add_loading_state(
+            LoadingState::new(GameState::AssetLoading).continue_to_state(GameState::Matchmaking),
+        )
+        .add_collection_to_loading_state::<_, ImageAssets>(GameState::AssetLoading)
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
@@ -37,6 +51,12 @@ fn main() {
 
 const MAP_SIZE: i32 = 41;
 const GRID_WIDTH: f32 = 0.05;
+
+#[derive(AssetCollection, Resource)]
+struct ImageAssets {
+    #[asset(path = "bullet.png")]
+    bullet: Handle<Image>,
+}
 
 fn setup(mut commands: Commands) {
     // Horizontal lines
