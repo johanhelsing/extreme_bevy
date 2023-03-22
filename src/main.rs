@@ -108,6 +108,8 @@ fn setup(mut commands: Commands) {
 }
 
 fn spawn_players(mut commands: Commands) {
+    info!("Spawning players");
+
     // Player 1
     commands
         .spawn((
