@@ -37,7 +37,34 @@ fn main() {
         .run();
 }
 
+const MAP_SIZE: i32 = 41;
+const GRID_WIDTH: f32 = 0.05;
+
 fn setup(mut commands: Commands) {
+    // Horizontal lines
+    for i in 0..=MAP_SIZE {
+        commands.spawn((
+            Transform::from_translation(Vec3::new(0., i as f32 - MAP_SIZE as f32 / 2., 0.)),
+            Sprite {
+                color: Color::srgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(MAP_SIZE as f32, GRID_WIDTH)),
+                ..default()
+            },
+        ));
+    }
+
+    // Vertical lines
+    for i in 0..=MAP_SIZE {
+        commands.spawn((
+            Transform::from_translation(Vec3::new(i as f32 - MAP_SIZE as f32 / 2., 0., 0.)),
+            Sprite {
+                color: Color::srgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(GRID_WIDTH, MAP_SIZE as f32)),
+                ..default()
+            },
+        ));
+    }
+
     commands.spawn((
         Camera2d,
         OrthographicProjection {
@@ -54,7 +81,7 @@ fn spawn_players(mut commands: Commands) {
     commands
         .spawn((
             Player { handle: 0 },
-            Transform::from_translation(Vec3::new(-2., 0., 0.)),
+            Transform::from_translation(Vec3::new(-2., 0., 100.)),
             Sprite {
                 color: Color::srgb(0., 0.47, 1.),
                 custom_size: Some(Vec2::new(1., 1.)),
@@ -67,7 +94,7 @@ fn spawn_players(mut commands: Commands) {
     commands
         .spawn((
             Player { handle: 1 },
-            Transform::from_translation(Vec3::new(2., 0., 0.)),
+            Transform::from_translation(Vec3::new(2., 0., 100.)),
             Sprite {
                 color: Color::srgb(0., 0.4, 0.),
                 custom_size: Some(Vec2::new(1., 1.)),
