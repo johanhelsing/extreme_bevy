@@ -261,7 +261,8 @@ fn fire_bullets(
                     Bullet,
                     *move_dir,
                     SpriteBundle {
-                        transform: Transform::from_translation(transform.translation),
+                        transform: Transform::from_translation(transform.translation)
+                            .with_rotation(Quat::from_rotation_arc_2d(Vec2::X, move_dir.0)),
                         texture: images.bullet.clone(),
                         sprite: Sprite {
                             custom_size: Some(Vec2::new(0.3, 0.1)),
