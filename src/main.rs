@@ -253,7 +253,8 @@ fn fire_bullets(
             commands
                 .spawn((
                     Bullet,
-                    Transform::from_translation(transform.translation),
+                    Transform::from_translation(transform.translation)
+                        .with_rotation(Quat::from_rotation_arc_2d(Vec2::X, move_dir.0)),
                     *move_dir,
                     Sprite {
                         image: images.bullet.clone(),
