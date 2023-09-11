@@ -3,6 +3,7 @@ use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
 use bevy_ggrs::{ggrs::DesyncDetection, prelude::*, *};
 use bevy_matchbox::prelude::*;
+use bevy_roll_safe::prelude::*;
 use clap::Parser;
 use components::*;
 use input::*;
@@ -23,6 +24,15 @@ enum GameState {
     AssetLoading,
     Matchmaking,
     InGame,
+}
+
+#[derive(States, Clone, Eq, PartialEq, Debug, Hash, Default)]
+enum RollbackState {
+    /// When the characters running and gunning
+    #[default]
+    InRound,
+    /// When one character is dead, and we're transitioning to the next round
+    RoundEnd,
 }
 
 fn main() {
@@ -51,6 +61,7 @@ fn main() {
             }),
             GgrsPlugin::<Config>::default(),
         ))
+        .init_ggrs_state::<RollbackState>()
         .rollback_component_with_clone::<Transform>()
         .rollback_component_with_copy::<BulletReady>()
         .rollback_component_with_copy::<Player>()
