@@ -3,6 +3,7 @@ use bevy::{camera::ScalingMode, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_ggrs::{ggrs::DesyncDetection, prelude::*, *};
 use bevy_matchbox::prelude::*;
+use bevy_roll_safe::prelude::*;
 use clap::Parser;
 use components::*;
 use input::*;
@@ -25,6 +26,15 @@ enum GameState {
     InGame,
 }
 
+#[derive(States, Clone, Eq, PartialEq, Debug, Hash, Default)]
+enum RollbackState {
+    /// When the characters running and gunning
+    #[default]
+    InRound,
+    /// When one character is dead, and we're transitioning to the next round
+    RoundEnd,
+}
+
 fn main() {
     let args = Args::parse();
     eprintln!("{args:?}");
@@ -42,6 +52,7 @@ fn main() {
                 ..default()
             }),
             GgrsPlugin::<Config>::default(),
+            RollbackSchedulePlugin::new_ggrs(),
         ))
         .init_state::<GameState>()
         .add_loading_state(
@@ -49,6 +60,7 @@ fn main() {
                 .load_collection::<ImageAssets>()
                 .continue_to_state(GameState::Matchmaking),
         )
+        .init_ggrs_state::<RollbackState>()
         .rollback_component_with_clone::<Transform>()
         .rollback_component_with_copy::<Bullet>()
         .rollback_component_with_copy::<BulletReady>()
@@ -76,7 +88,7 @@ fn main() {
         )
         .add_systems(ReadInputs, read_local_inputs)
         .add_systems(
-            GgrsSchedule,
+            RollbackUpdate,
             (
                 move_players,
                 reload_bullet,
