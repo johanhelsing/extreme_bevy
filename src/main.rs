@@ -2,6 +2,7 @@ use bevy::{math::Vec3Swizzles, prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
 use bevy_ggrs::{ggrs::PlayerType, *};
 use bevy_matchbox::prelude::*;
+use bevy_roll_safe::prelude::*;
 use components::*;
 use input::*;
 
@@ -26,6 +27,15 @@ enum GameState {
     InGame,
 }
 
+#[derive(States, Clone, Eq, PartialEq, Debug, Hash, Default, Reflect)]
+enum RollbackState {
+    /// When the characters running and gunning
+    #[default]
+    InRound,
+    /// When one character is dead, and we're transitioning to the next round
+    RoundEnd,
+}
+
 #[derive(Resource)]
 struct LocalPlayerHandle(usize);
 
@@ -47,6 +57,7 @@ fn main() {
         .add_ggrs_plugin(
             GgrsPlugin::<GgrsConfig>::new()
                 .with_input_system(input)
+                .register_roll_state::<RollbackState>()
                 .register_rollback_component::<Transform>()
                 .register_rollback_component::<BulletReady>()
                 .register_rollback_component::<MoveDir>(),
@@ -64,6 +75,7 @@ fn main() {
                 camera_follow.run_if(in_state(GameState::InGame)),
             ),
         )
+        .add_roll_state::<RollbackState>(GgrsSchedule)
         .add_systems(
             GgrsSchedule,
             (
