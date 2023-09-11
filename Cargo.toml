@@ -12,3 +12,4 @@ bevy_ggrs = { version = "0.18", features = ["wasm-bindgen"] }
 bevy_matchbox = { version = "0.12", features = ["ggrs"] }
 bevy_asset_loader = "0.23"
 clap = { version = "4.5", features = ["derive"] }
+bevy_roll_safe = "0.5"

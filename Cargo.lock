@@ -1390,6 +1390,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_roll_safe"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c64e8ffab87fbc33904cfda78a2e3ad331b66f7e29815ea2f031a5ad7be6a796"
+dependencies = [
+ "bevy",
+ "bevy_ggrs",
+ "bevy_math",
+]
+
+[[package]]
 name = "bevy_scene"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2624,6 +2635,7 @@ dependencies = [
  "bevy_asset_loader",
  "bevy_ggrs",
  "bevy_matchbox",
+ "bevy_roll_safe",
  "clap",
 ]
 
