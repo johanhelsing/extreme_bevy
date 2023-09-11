@@ -1209,6 +1209,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_roll_safe"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d5a31f4d4f3bd8bb9104acd7cc506ddd647ca5fd3a4d8b831520cf6e6e002b1"
+dependencies = [
+ "bevy",
+ "bevy_ggrs",
+ "bevy_math",
+]
+
+[[package]]
 name = "bevy_scene"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2349,6 +2360,7 @@ dependencies = [
  "bevy_asset_loader",
  "bevy_ggrs",
  "bevy_matchbox",
+ "bevy_roll_safe",
  "clap",
 ]
 
@@ -2718,6 +2730,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "151665d9be52f9bb40fc7966565d39666f2d1e69233571b71b87791c7e0528b3"
 dependencies = [
  "bytemuck",
+ "libm",
  "serde",
 ]
 
@@ -3257,6 +3270,12 @@ dependencies = [
  "cfg-if",
  "windows-targets 0.52.4",
 ]
+
+[[package]]
+name = "libm"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
 
 [[package]]
 name = "libredox"
