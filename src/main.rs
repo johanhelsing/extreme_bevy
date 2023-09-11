@@ -94,7 +94,9 @@ fn main() {
                 fire_bullets.after(move_players).after(reload_bullet),
                 move_bullet.after(fire_bullets),
                 kill_players.after(move_bullet).after(move_players),
-            ),
+            )
+                .run_if(in_state(RollbackState::InRound))
+                .after(bevy_roll_safe::apply_state_transition::<RollbackState>),
         )
         .run();
 }
@@ -364,6 +366,7 @@ fn kill_players(
     mut commands: Commands,
     players: Query<(Entity, &Transform), (With<Player>, Without<Bullet>)>,
     bullets: Query<&Transform, With<Bullet>>,
+    mut next_state: ResMut<NextState<RollbackState>>,
 ) {
     for (player, player_transform) in &players {
         for bullet_transform in &bullets {
@@ -373,6 +376,7 @@ fn kill_players(
             );
             if distance < PLAYER_RADIUS + BULLET_RADIUS {
                 commands.entity(player).despawn();
+                next_state.set(RollbackState::RoundEnd);
             }
         }
     }
