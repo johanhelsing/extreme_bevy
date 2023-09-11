@@ -1142,6 +1142,7 @@ dependencies = [
  "derive_more",
  "glam",
  "itertools",
+ "libm",
  "rand",
  "rand_distr",
  "serde",
@@ -1331,6 +1332,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "bevy_roll_safe"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f95bb2af7cb3f973865d256243157a87829f800961c196e45454132d67da03d"
+dependencies = [
+ "bevy",
+ "bevy_ggrs",
+ "bevy_math",
 ]
 
 [[package]]
@@ -2558,6 +2570,7 @@ dependencies = [
  "bevy_asset_loader",
  "bevy_ggrs",
  "bevy_matchbox",
+ "bevy_roll_safe",
  "clap",
 ]
 
@@ -2925,6 +2938,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc46dd3ec48fdd8e693a98d2b8bafae273a2d54c1de02a2a7e3d57d501f39677"
 dependencies = [
  "bytemuck",
+ "libm",
  "rand",
  "serde",
 ]
