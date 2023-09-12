@@ -118,6 +118,7 @@ fn main() {
             GgrsSchedule,
             round_end_timeout
                 .run_if(in_state(RollbackState::RoundEnd))
+                .ambiguous_with(kill_players)
                 .after(apply_state_transition::<RollbackState>),
         )
         .run();
