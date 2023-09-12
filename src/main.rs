@@ -45,6 +45,10 @@ struct LocalPlayerHandle(usize);
 #[reflect(Resource)]
 struct RoundEndTimer(Timer);
 
+#[derive(Resource, Reflect, Deref, DerefMut)]
+#[reflect(Resource)]
+struct Scores(Timer);
+
 impl Default for RoundEndTimer {
     fn default() -> Self {
         RoundEndTimer(Timer::from_seconds(1.0, TimerMode::Repeating))
