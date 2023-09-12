@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::{math::Vec3Swizzles, prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
 use bevy_egui::{
-    egui::{self, Color32, FontId, RichText},
+    egui::{self, Align2, Color32, FontId, RichText},
     EguiContexts, EguiPlugin,
 };
 use bevy_ggrs::{ggrs::PlayerType, *};
@@ -98,7 +98,7 @@ fn main() {
             Update,
             (
                 wait_for_players.run_if(in_state(GameState::Matchmaking)),
-                camera_follow.run_if(in_state(GameState::InGame)),
+                (camera_follow, update_score_ui).run_if(in_state(GameState::InGame)),
             ),
         )
         .add_roll_state::<RollbackState>(GgrsSchedule)
@@ -420,4 +420,18 @@ fn round_end_timeout(
     if timer.just_finished() {
         state.set(RollbackState::InRound);
     }
+}
+
+fn update_score_ui(mut contexts: EguiContexts, scores: Res<Scores>) {
+    let Scores(p1_score, p2_score) = *scores;
+
+    egui::Area::new("score")
+        .anchor(Align2::CENTER_TOP, (0., 25.))
+        .show(contexts.ctx_mut(), |ui| {
+            ui.label(
+                RichText::new(format!("{p1_score} - {p2_score}"))
+                    .color(Color32::BLACK)
+                    .font(FontId::proportional(72.0)),
+            );
+        });
 }
