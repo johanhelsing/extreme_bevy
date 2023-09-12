@@ -1,6 +1,7 @@
 use args::Args;
 use bevy::{camera::ScalingMode, prelude::*};
 use bevy_asset_loader::prelude::*;
+use bevy_egui::EguiPlugin;
 use bevy_ggrs::{ggrs::DesyncDetection, prelude::*, *};
 use bevy_matchbox::prelude::*;
 use bevy_roll_safe::prelude::*;
@@ -65,6 +66,7 @@ fn main() {
             }),
             GgrsPlugin::<Config>::default(),
             RollbackSchedulePlugin::new_ggrs(),
+            EguiPlugin::default(),
         ))
         .init_state::<GameState>()
         .add_loading_state(
