@@ -99,13 +99,14 @@ fn main() {
                 move_bullet.after(fire_bullets),
                 kill_players.after(move_bullet).after(move_players),
             )
-                .run_if(in_state(RollbackState::InRound))
+                .distributive_run_if(in_state(RollbackState::InRound))
                 .after(apply_state_transition::<RollbackState>),
         )
         .add_systems(
             GgrsSchedule,
             round_end_timeout
-                .run_if(in_state(RollbackState::RoundEnd))
+                .ambiguous_with(kill_players)
+                .distributive_run_if(in_state(RollbackState::RoundEnd))
                 .after(apply_state_transition::<RollbackState>),
         )
         .run();
