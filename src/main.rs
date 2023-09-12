@@ -47,7 +47,7 @@ struct RoundEndTimer(Timer);
 
 impl Default for RoundEndTimer {
     fn default() -> Self {
-        RoundEndTimer(Timer::from_seconds(1.0, TimerMode::Once))
+        RoundEndTimer(Timer::from_seconds(1.0, TimerMode::Repeating))
     }
 }
 
