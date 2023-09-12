@@ -13,3 +13,4 @@ bevy_matchbox = { version = "0.11", features = ["ggrs"] }
 bevy_asset_loader = "0.22"
 clap = { version = "4.5", features = ["derive"] }
 bevy_roll_safe = "0.4"
+bevy_egui = "0.31"
