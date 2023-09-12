@@ -35,6 +35,15 @@ enum RollbackState {
     RoundEnd,
 }
 
+#[derive(Resource, Clone, Deref, DerefMut)]
+struct RoundEndTimer(Timer);
+
+impl Default for RoundEndTimer {
+    fn default() -> Self {
+        RoundEndTimer(Timer::from_seconds(1.0, TimerMode::Once))
+    }
+}
+
 fn main() {
     let args = Args::parse();
     eprintln!("{args:?}");
@@ -58,6 +67,7 @@ fn main() {
             GgrsPlugin::<Config>::default(),
         ))
         .add_ggrs_state::<RollbackState>()
+        .rollback_resource_with_clone::<RoundEndTimer>()
         .rollback_component_with_clone::<Transform>()
         .rollback_component_with_copy::<BulletReady>()
         .rollback_component_with_copy::<Player>()
@@ -70,6 +80,7 @@ fn main() {
         .rollback_component_with_clone::<ViewVisibility>()
         .checksum_component::<Transform>(checksum_transform)
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+        .init_resource::<RoundEndTimer>()
         .add_systems(
             OnEnter(GameState::Matchmaking),
             (setup, start_matchbox_socket.run_if(p2p_mode)),
@@ -97,6 +108,12 @@ fn main() {
                 kill_players.after(move_bullet).after(move_players),
             )
                 .run_if(in_state(RollbackState::InRound))
+                .after(apply_state_transition::<RollbackState>),
+        )
+        .add_systems(
+            GgrsSchedule,
+            round_end_timeout
+                .run_if(in_state(RollbackState::RoundEnd))
                 .after(apply_state_transition::<RollbackState>),
         )
         .run();
@@ -414,5 +431,17 @@ fn camera_follow(
             transform.translation.x = pos.x;
             transform.translation.y = pos.y;
         }
+    }
+}
+
+fn round_end_timeout(
+    mut timer: ResMut<RoundEndTimer>,
+    mut state: ResMut<NextState<RollbackState>>,
+    time: Res<Time>,
+) {
+    timer.tick(time.delta());
+
+    if timer.just_finished() {
+        state.set(RollbackState::InRound);
     }
 }
