@@ -1,6 +1,7 @@
 use args::Args;
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
+use bevy_egui::EguiPlugin;
 use bevy_ggrs::{ggrs::DesyncDetection, prelude::*, *};
 use bevy_matchbox::prelude::*;
 use bevy_roll_safe::prelude::*;
@@ -68,6 +69,7 @@ fn main() {
                 ..default()
             }),
             GgrsPlugin::<Config>::default(),
+            EguiPlugin,
         ))
         .add_ggrs_state::<RollbackState>()
         .rollback_resource_with_clone::<RoundEndTimer>()
