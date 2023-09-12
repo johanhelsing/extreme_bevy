@@ -112,7 +112,9 @@ fn main() {
         )
         .add_systems(
             RollbackUpdate,
-            round_end_timeout.run_if(in_state(RollbackState::RoundEnd)),
+            round_end_timeout
+                .run_if(in_state(RollbackState::RoundEnd))
+                .ambiguous_with(kill_players),
         )
         .run();
 }
