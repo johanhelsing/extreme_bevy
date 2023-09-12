@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{math::Vec3Swizzles, prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
 use bevy_ggrs::{ggrs::PlayerType, *};
@@ -39,6 +41,16 @@ enum RollbackState {
 #[derive(Resource)]
 struct LocalPlayerHandle(usize);
 
+#[derive(Resource, Reflect, Deref, DerefMut)]
+#[reflect(Resource)]
+struct RoundEndTimer(Timer);
+
+impl Default for RoundEndTimer {
+    fn default() -> Self {
+        RoundEndTimer(Timer::from_seconds(1.0, TimerMode::Once))
+    }
+}
+
 fn main() {
     App::new()
         .add_state::<GameState>()
@@ -58,11 +70,13 @@ fn main() {
             GgrsPlugin::<GgrsConfig>::new()
                 .with_input_system(input)
                 .register_roll_state::<RollbackState>()
+                .register_rollback_resource::<RoundEndTimer>()
                 .register_rollback_component::<Transform>()
                 .register_rollback_component::<BulletReady>()
                 .register_rollback_component::<MoveDir>(),
         )
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+        .init_resource::<RoundEndTimer>()
         .add_systems(
             OnEnter(GameState::Matchmaking),
             (setup, start_matchbox_socket),
@@ -86,6 +100,12 @@ fn main() {
                 kill_players.after(move_bullet).after(move_players),
             )
                 .run_if(in_state(RollbackState::InRound))
+                .after(apply_state_transition::<RollbackState>),
+        )
+        .add_systems(
+            GgrsSchedule,
+            round_end_timeout
+                .run_if(in_state(RollbackState::RoundEnd))
                 .after(apply_state_transition::<RollbackState>),
         )
         .run();
@@ -354,5 +374,16 @@ fn camera_follow(
             transform.translation.x = pos.x;
             transform.translation.y = pos.y;
         }
+    }
+}
+
+fn round_end_timeout(
+    mut timer: ResMut<RoundEndTimer>,
+    mut state: ResMut<NextState<RollbackState>>,
+) {
+    timer.tick(Duration::from_secs_f64(1. / 60.));
+
+    if timer.just_finished() {
+        state.set(RollbackState::InRound);
     }
 }
