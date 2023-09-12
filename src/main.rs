@@ -1,7 +1,10 @@
 use args::Args;
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
-use bevy_egui::EguiPlugin;
+use bevy_egui::{
+    egui::{self, Align2, Color32, FontId, RichText},
+    EguiContexts, EguiPlugin,
+};
 use bevy_ggrs::{ggrs::DesyncDetection, prelude::*, *};
 use bevy_matchbox::prelude::*;
 use bevy_roll_safe::prelude::*;
@@ -104,7 +107,8 @@ fn main() {
                     start_synctest_session.run_if(synctest_mode),
                 )
                     .run_if(in_state(GameState::Matchmaking)),
-                (camera_follow, handle_ggrs_events).run_if(in_state(GameState::InGame)),
+                (camera_follow, update_score_ui, handle_ggrs_events)
+                    .run_if(in_state(GameState::InGame)),
             ),
         )
         .add_systems(ReadInputs, read_local_inputs)
@@ -476,4 +480,18 @@ fn round_end_timeout(
     if timer.just_finished() {
         state.set(RollbackState::InRound);
     }
+}
+
+fn update_score_ui(mut contexts: EguiContexts, scores: Res<Scores>) {
+    let Scores(p1_score, p2_score) = *scores;
+
+    egui::Area::new("score".into())
+        .anchor(Align2::CENTER_TOP, (0., 25.))
+        .show(contexts.ctx_mut(), |ui| {
+            ui.label(
+                RichText::new(format!("{p1_score} - {p2_score}"))
+                    .color(Color32::BLACK)
+                    .font(FontId::proportional(72.0)),
+            );
+        });
 }
