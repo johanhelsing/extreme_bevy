@@ -2,6 +2,10 @@ use std::time::Duration;
 
 use bevy::{math::Vec3Swizzles, prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
+use bevy_egui::{
+    egui::{self, Color32, FontId, RichText},
+    EguiContexts, EguiPlugin,
+};
 use bevy_ggrs::{ggrs::PlayerType, *};
 use bevy_matchbox::prelude::*;
 use bevy_roll::prelude::*;
@@ -62,14 +66,17 @@ fn main() {
             LoadingState::new(GameState::AssetLoading).continue_to_state(GameState::Matchmaking),
         )
         .add_collection_to_loading_state::<_, ImageAssets>(GameState::AssetLoading)
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                // fill the entire browser window
-                fit_canvas_to_parent: true,
+        .add_plugins((
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    // fill the entire browser window
+                    fit_canvas_to_parent: true,
+                    ..default()
+                }),
                 ..default()
             }),
-            ..default()
-        }))
+            EguiPlugin,
+        ))
         .add_ggrs_plugin(
             GgrsPlugin::<GgrsConfig>::new()
                 .with_input_system(input)
