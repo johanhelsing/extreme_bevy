@@ -38,6 +38,9 @@ enum RollbackState {
 #[derive(Resource, Clone, Deref, DerefMut)]
 struct RoundEndTimer(Timer);
 
+#[derive(Resource, Default, Clone, Copy, Debug)]
+struct Scores(u32, u32);
+
 impl Default for RoundEndTimer {
     fn default() -> Self {
         RoundEndTimer(Timer::from_seconds(1.0, TimerMode::Repeating))
@@ -72,6 +75,7 @@ fn main() {
         ))
         .init_ggrs_state::<RollbackState>()
         .rollback_resource_with_clone::<RoundEndTimer>()
+        .rollback_resource_with_copy::<Scores>()
         .rollback_component_with_clone::<Transform>()
         .rollback_component_with_copy::<Bullet>()
         .rollback_component_with_copy::<BulletReady>()
@@ -86,6 +90,7 @@ fn main() {
         .checksum_component::<Transform>(checksum_transform)
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .init_resource::<RoundEndTimer>()
+        .init_resource::<Scores>()
         .add_systems(
             OnEnter(GameState::Matchmaking),
             (setup, start_matchbox_socket.run_if(p2p_mode)),
@@ -414,19 +419,27 @@ const BULLET_RADIUS: f32 = 0.025;
 
 fn kill_players(
     mut commands: Commands,
-    players: Query<(Entity, &Transform), (With<Player>, Without<Bullet>)>,
+    players: Query<(Entity, &Transform, &Player), Without<Bullet>>,
     bullets: Query<&Transform, With<Bullet>>,
     mut next_state: ResMut<NextState<RollbackState>>,
+    mut scores: ResMut<Scores>,
 ) {
-    for (player, player_transform) in &players {
+    for (player_entity, player_transform, player) in &players {
         for bullet_transform in &bullets {
             let distance = Vec2::distance(
                 player_transform.translation.xy(),
                 bullet_transform.translation.xy(),
             );
             if distance < PLAYER_RADIUS + BULLET_RADIUS {
-                commands.entity(player).despawn_recursive();
+                commands.entity(player_entity).despawn_recursive();
                 next_state.set(RollbackState::RoundEnd);
+
+                if player.handle == 0 {
+                    scores.1 += 1;
+                } else {
+                    scores.0 += 1;
+                }
+                info!("player died: {scores:?}")
             }
         }
     }
