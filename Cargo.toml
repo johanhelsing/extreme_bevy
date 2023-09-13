@@ -14,3 +14,4 @@ bevy_asset_loader = "0.21"
 clap = { version = "4.4", features = ["derive"] }
 bevy_roll_safe = "0.3"
 bevy_egui = "0.28"
+rand = "0.8"
