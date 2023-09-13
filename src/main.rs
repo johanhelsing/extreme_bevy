@@ -11,6 +11,7 @@ use bevy_roll_safe::prelude::*;
 use clap::Parser;
 use components::*;
 use input::*;
+use rand::Rng;
 
 mod args;
 mod components;
@@ -198,11 +199,16 @@ fn spawn_players(
         commands.entity(bullet).despawn_recursive();
     }
 
+    let mut rng = rand::thread_rng();
+    let half = MAP_SIZE as f32 / 2.;
+    let p1_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
+    let p2_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
+
     // Player 1
     commands
         .spawn((
             Player { handle: 0 },
-            Transform::from_translation(Vec3::new(-2., 0., 100.)),
+            Transform::from_translation(p1_pos.extend(100.)),
             BulletReady(true),
             MoveDir(-Vec2::X),
             Sprite {
@@ -217,7 +223,7 @@ fn spawn_players(
     commands
         .spawn((
             Player { handle: 1 },
-            Transform::from_translation(Vec3::new(2., 0., 100.)),
+            Transform::from_translation(p2_pos.extend(100.)),
             BulletReady(true),
             MoveDir(-Vec2::X),
             Sprite {

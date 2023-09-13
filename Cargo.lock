@@ -2687,6 +2687,7 @@ dependencies = [
  "bevy_matchbox",
  "bevy_roll_safe",
  "clap",
+ "rand",
 ]
 
 [[package]]
