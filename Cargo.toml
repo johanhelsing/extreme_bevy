@@ -10,6 +10,7 @@ bevy_matchbox = { version = "0.7", features = ["ggrs"] }
 bevy_asset_loader = "0.17"
 bevy_roll = { git = "https://github.com/johanhelsing/bevy_roll" }
 bevy_egui = "0.21"
+rand = "0.8"
 
 [patch.crates-io]
 bevy = { git = "https://github.com/johanhelsing/bevy", branch = "reflect-states-0.11" }

@@ -11,6 +11,7 @@ use bevy_matchbox::prelude::*;
 use bevy_roll::prelude::*;
 use components::*;
 use input::*;
+use rand::Rng;
 
 mod components;
 mod input;
@@ -189,6 +190,11 @@ fn spawn_players(
         commands.entity(bullet).despawn_recursive();
     }
 
+    let mut rng = rand::thread_rng();
+    let half = MAP_SIZE as f32 / 2.;
+    let p1_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
+    let p2_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
+
     // Player 1
     commands
         .spawn((
@@ -196,7 +202,7 @@ fn spawn_players(
             BulletReady(true),
             MoveDir(-Vec2::X),
             SpriteBundle {
-                transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
+                transform: Transform::from_translation(p1_pos.extend(100.)),
                 sprite: Sprite {
                     color: Color::rgb(0., 0.47, 1.),
                     custom_size: Some(Vec2::new(1., 1.)),
@@ -214,7 +220,7 @@ fn spawn_players(
             BulletReady(true),
             MoveDir(-Vec2::X),
             SpriteBundle {
-                transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
+                transform: Transform::from_translation(p2_pos.extend(100.)),
                 sprite: Sprite {
                     color: Color::rgb(0., 0.4, 0.),
                     custom_size: Some(Vec2::new(1., 1.)),

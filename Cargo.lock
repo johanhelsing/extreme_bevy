@@ -2340,6 +2340,7 @@ dependencies = [
  "bevy_ggrs",
  "bevy_matchbox",
  "bevy_roll",
+ "rand",
 ]
 
 [[package]]
