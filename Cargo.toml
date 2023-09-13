@@ -14,3 +14,5 @@ bevy_asset_loader = "0.23"
 clap = { version = "4.5", features = ["derive"] }
 bevy_roll_safe = "0.5"
 bevy_egui = "0.34"
+rand = "0.9"
+getrandom = { version = "0.3", features = ["wasm_js"] }
