@@ -6,7 +6,10 @@ use bevy_egui::{
     egui::{self, Align2, Color32, FontId, RichText},
     EguiContexts, EguiPlugin,
 };
-use bevy_ggrs::{ggrs::PlayerType, *};
+use bevy_ggrs::{
+    ggrs::{DesyncDetection, GGRSEvent, PlayerType},
+    *,
+};
 use bevy_matchbox::prelude::*;
 use bevy_roll::prelude::*;
 use components::*;
@@ -16,6 +19,7 @@ use rand::Rng;
 mod components;
 mod input;
 
+#[derive(Debug)]
 struct GgrsConfig;
 
 impl ggrs::Config for GgrsConfig {
@@ -85,6 +89,7 @@ fn main() {
                 .register_rollback_resource::<RoundEndTimer>()
                 .register_rollback_resource::<Scores>()
                 .register_rollback_component::<Transform>()
+                .register_rollback_component::<HashablePosition>()
                 .register_rollback_component::<BulletReady>()
                 .register_rollback_component::<MoveDir>(),
         )
@@ -100,6 +105,7 @@ fn main() {
             (
                 wait_for_players.run_if(in_state(GameState::Matchmaking)),
                 (camera_follow, update_score_ui).run_if(in_state(GameState::InGame)),
+                handle_ggrs_events.run_if(resource_exists::<Session<GgrsConfig>>()),
             ),
         )
         .add_roll_state::<RollbackState>(GgrsSchedule)
@@ -112,6 +118,9 @@ fn main() {
                 fire_bullets.after(move_players).after(reload_bullet),
                 move_bullet.after(fire_bullets),
                 kill_players.after(move_bullet).after(move_players),
+                update_hashable_positions
+                    .after(move_bullet)
+                    .after(move_players),
             )
                 .distributive_run_if(in_state(RollbackState::InRound))
                 .after(apply_state_transition::<RollbackState>),
@@ -210,6 +219,7 @@ fn spawn_players(
                 },
                 ..default()
             },
+            HashablePosition::default(),
         ))
         .add_rollback();
 
@@ -228,6 +238,7 @@ fn spawn_players(
                 },
                 ..default()
             },
+            HashablePosition::default(),
         ))
         .add_rollback();
 }
@@ -261,6 +272,7 @@ fn wait_for_players(
     // create a GGRS P2P session
     let mut session_builder = ggrs::SessionBuilder::<GgrsConfig>::new()
         .with_num_players(num_players)
+        .with_desync_detection_mode(DesyncDetection::On { interval: 1 })
         .with_input_delay(2);
 
     for (i, player) in players.into_iter().enumerate() {
@@ -348,6 +360,7 @@ fn fire_bullets(
                         },
                         ..default()
                     },
+                    HashablePosition::default(),
                 ))
                 .add_rollback();
             bullet_ready.0 = false;
@@ -440,4 +453,27 @@ fn update_score_ui(mut contexts: EguiContexts, scores: Res<Scores>) {
                     .font(FontId::proportional(72.0)),
             );
         });
+}
+
+fn update_hashable_positions(mut hashable_positions: Query<(&mut HashablePosition, &Transform)>) {
+    for (mut position, &transform) in &mut hashable_positions {
+        **position = transform.translation.xy();
+    }
+}
+
+fn handle_ggrs_events(mut session: ResMut<Session<GgrsConfig>>) {
+    match session.as_mut() {
+        Session::P2P(s) => {
+            for event in s.events() {
+                match event {
+                    GGRSEvent::Disconnected { .. } | GGRSEvent::NetworkInterrupted { .. } => {
+                        warn!("GGRS event: {event:?}")
+                    }
+                    GGRSEvent::DesyncDetected { .. } => panic!("GGRS event: {event:?}"),
+                    _ => info!("GGRS event: {event:?}"),
+                }
+            }
+        }
+        _ => panic!("This example focuses on p2p."),
+    }
 }
