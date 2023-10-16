@@ -275,7 +275,7 @@ fn wait_for_players(
     let mut session_builder = ggrs::SessionBuilder::<GgrsConfig>::new()
         .with_num_players(num_players)
         .with_desync_detection_mode(DesyncDetection::On { interval: 1 })
-        .with_input_delay(2);
+        .with_input_delay(0);
 
     for (i, player) in players.into_iter().enumerate() {
         if player == PlayerType::Local {
