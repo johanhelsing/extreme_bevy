@@ -201,8 +201,10 @@ fn spawn_players(
 
     let mut rng = rand::thread_rng();
     let half = MAP_SIZE as f32 / 2.;
-    let p1_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
-    let p2_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
+    // let p1_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
+    // let p2_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
+    let p1_pos = Vec2::new(-2., 0.);
+    let p2_pos = Vec2::new(2., 0.);
 
     // Player 1
     commands
