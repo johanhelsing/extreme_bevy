@@ -1,7 +1,7 @@
 use bevy::{prelude::*, utils::FixedState};
 use std::hash::{BuildHasher, Hash, Hasher};
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Player {
     pub handle: usize,
 }

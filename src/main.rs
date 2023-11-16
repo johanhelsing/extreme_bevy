@@ -49,6 +49,7 @@ fn main() {
         ))
         .rollback_component_with_clone::<Transform>()
         .rollback_component_with_copy::<BulletReady>()
+        .rollback_component_with_copy::<Player>()
         .rollback_component_with_copy::<MoveDir>()
         .checksum_component::<Transform>(checksum_transform)
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
