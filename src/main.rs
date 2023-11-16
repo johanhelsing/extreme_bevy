@@ -30,6 +30,7 @@ fn main() {
     eprintln!("{args:?}");
 
     App::new()
+        .insert_resource(args)
         .init_state::<GameState>()
         .add_loading_state(
             LoadingState::new(GameState::AssetLoading)
