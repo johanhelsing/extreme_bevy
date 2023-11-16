@@ -51,6 +51,12 @@ fn main() {
         .rollback_component_with_copy::<BulletReady>()
         .rollback_component_with_copy::<Player>()
         .rollback_component_with_copy::<MoveDir>()
+        .rollback_component_with_clone::<Sprite>()
+        .rollback_component_with_clone::<GlobalTransform>()
+        .rollback_component_with_clone::<Handle<Image>>()
+        .rollback_component_with_clone::<Visibility>()
+        .rollback_component_with_clone::<InheritedVisibility>()
+        .rollback_component_with_clone::<ViewVisibility>()
         .checksum_component::<Transform>(checksum_transform)
         .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
         .add_systems(
