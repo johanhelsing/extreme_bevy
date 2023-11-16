@@ -184,6 +184,7 @@ fn wait_for_players(
     mut commands: Commands,
     mut socket: ResMut<MatchboxSocket>,
     mut next_state: ResMut<NextState<GameState>>,
+    args: Res<Args>,
 ) {
     if socket.get_channel(0).is_err() {
         return; // we've already started
@@ -203,7 +204,7 @@ fn wait_for_players(
     // create a GGRS P2P session
     let mut session_builder = ggrs::SessionBuilder::<Config>::new()
         .with_num_players(num_players)
-        .with_input_delay(2);
+        .with_input_delay(args.input_delay);
 
     for (i, player) in players.into_iter().enumerate() {
         session_builder = session_builder
