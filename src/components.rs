@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_ggrs::checksum_hasher;
 use std::hash::{Hash, Hasher};
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Player {
     pub handle: usize,
 }
