@@ -1,7 +1,7 @@
 use args::Args;
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
-use bevy_ggrs::{prelude::*, *};
+use bevy_ggrs::{ggrs::DesyncDetection, prelude::*, *};
 use bevy_matchbox::prelude::*;
 use clap::Parser;
 use components::*;
@@ -70,7 +70,7 @@ fn main() {
                     start_synctest_session.run_if(synctest_mode),
                 )
                     .run_if(in_state(GameState::Matchmaking)),
-                camera_follow.run_if(in_state(GameState::InGame)),
+                (camera_follow, handle_ggrs_events).run_if(in_state(GameState::InGame)),
             ),
         )
         .add_systems(ReadInputs, read_local_inputs)
@@ -204,6 +204,7 @@ fn wait_for_players(
     // create a GGRS P2P session
     let mut session_builder = ggrs::SessionBuilder::<Config>::new()
         .with_num_players(num_players)
+        .with_desync_detection_mode(DesyncDetection::On { interval: 1 })
         .with_input_delay(args.input_delay);
 
     for (i, player) in players.into_iter().enumerate() {
@@ -242,6 +243,30 @@ fn start_synctest_session(mut commands: Commands, mut next_state: ResMut<NextSta
 
     commands.insert_resource(bevy_ggrs::Session::SyncTest(ggrs_session));
     next_state.set(GameState::InGame);
+}
+
+fn handle_ggrs_events(mut session: ResMut<Session<Config>>) {
+    match session.as_mut() {
+        Session::P2P(s) => {
+            for event in s.events() {
+                match event {
+                    GgrsEvent::Disconnected { .. } | GgrsEvent::NetworkInterrupted { .. } => {
+                        warn!("GGRS event: {event:?}")
+                    }
+                    GgrsEvent::DesyncDetected {
+                        local_checksum,
+                        remote_checksum,
+                        frame,
+                        ..
+                    } => {
+                        error!("Desync on frame {frame}. Local checksum: {local_checksum:X}, remote checksum: {remote_checksum:X}");
+                    }
+                    _ => info!("GGRS event: {event:?}"),
+                }
+            }
+        }
+        _ => {}
+    }
 }
 
 fn move_players(
