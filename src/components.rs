@@ -1,8 +1,5 @@
-use bevy::prelude::*;
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
+use bevy::{prelude::*, utils::FixedState};
+use std::hash::{BuildHasher, Hash, Hasher};
 
 #[derive(Component)]
 pub struct Player {
@@ -19,7 +16,7 @@ pub struct Bullet;
 pub struct MoveDir(pub Vec2);
 
 pub fn checksum_transform(transform: &Transform) -> u64 {
-    let mut hasher = DefaultHasher::new();
+    let mut hasher = FixedState.build_hasher();
 
     assert!(
         transform.translation.is_finite() && transform.rotation.is_finite(),
