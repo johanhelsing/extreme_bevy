@@ -1,7 +1,7 @@
 use args::Args;
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
-use bevy_ggrs::*;
+use bevy_ggrs::{prelude::*, *};
 use bevy_matchbox::prelude::*;
 use clap::Parser;
 use components::*;
@@ -62,7 +62,11 @@ fn main() {
         .add_systems(
             Update,
             (
-                wait_for_players.run_if(in_state(GameState::Matchmaking).and_then(p2p_mode)),
+                (
+                    wait_for_players.run_if(p2p_mode),
+                    start_synctest_session.run_if(synctest_mode),
+                )
+                    .run_if(in_state(GameState::Matchmaking)),
                 camera_follow.run_if(in_state(GameState::InGame)),
             ),
         )
@@ -223,6 +227,26 @@ fn wait_for_players(
         .expect("failed to start session");
 
     commands.insert_resource(bevy_ggrs::Session::P2P(ggrs_session));
+    next_state.set(GameState::InGame);
+}
+
+fn start_synctest_session(mut commands: Commands, mut next_state: ResMut<NextState<GameState>>) {
+    info!("Starting synctest session");
+    let num_players = 2;
+
+    let mut session_builder = ggrs::SessionBuilder::<Config>::new().with_num_players(num_players);
+
+    for i in 0..num_players {
+        session_builder = session_builder
+            .add_player(PlayerType::Local, i)
+            .expect("failed to add player");
+    }
+
+    let ggrs_session = session_builder
+        .start_synctest_session()
+        .expect("failed to start session");
+
+    commands.insert_resource(bevy_ggrs::Session::SyncTest(ggrs_session));
     next_state.set(GameState::InGame);
 }
 
