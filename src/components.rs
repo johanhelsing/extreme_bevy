@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use std::hash::{DefaultHasher, Hash, Hasher};
+use bevy_ggrs::checksum_hasher;
+use std::hash::{Hash, Hasher};
 
 #[derive(Component)]
 pub struct Player {
@@ -16,7 +17,7 @@ pub struct Bullet;
 pub struct MoveDir(pub Vec2);
 
 pub fn checksum_transform(transform: &Transform) -> u64 {
-    let mut hasher = DefaultHasher::new();
+    let mut hasher = checksum_hasher();
 
     assert!(
         transform.is_finite(),
