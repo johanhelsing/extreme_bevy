@@ -1,10 +1,13 @@
+use args::Args;
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_asset_loader::prelude::*;
 use bevy_ggrs::*;
 use bevy_matchbox::prelude::*;
+use clap::Parser;
 use components::*;
 use input::*;
 
+mod args;
 mod components;
 mod input;
 
@@ -23,6 +26,9 @@ enum GameState {
 }
 
 fn main() {
+    let args = Args::parse();
+    eprintln!("{args:?}");
+
     App::new()
         .add_state::<GameState>()
         .add_loading_state(
