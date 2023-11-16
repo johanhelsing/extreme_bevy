@@ -56,13 +56,13 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(
             OnEnter(GameState::Matchmaking),
-            (setup, start_matchbox_socket),
+            (setup, start_matchbox_socket.run_if(p2p_mode)),
         )
         .add_systems(OnEnter(GameState::InGame), spawn_players)
         .add_systems(
             Update,
             (
-                wait_for_players.run_if(in_state(GameState::Matchmaking)),
+                wait_for_players.run_if(in_state(GameState::Matchmaking).and_then(p2p_mode)),
                 camera_follow.run_if(in_state(GameState::InGame)),
             ),
         )
@@ -87,6 +87,14 @@ const GRID_WIDTH: f32 = 0.05;
 struct ImageAssets {
     #[asset(path = "bullet.png")]
     bullet: Handle<Image>,
+}
+
+fn synctest_mode(args: Res<Args>) -> bool {
+    args.synctest
+}
+
+fn p2p_mode(args: Res<Args>) -> bool {
+    !args.synctest
 }
 
 fn setup(mut commands: Commands) {
