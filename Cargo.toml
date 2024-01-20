@@ -15,3 +15,4 @@ clap = { version = "4.5", features = ["derive"] }
 bevy_roll_safe = "0.4"
 bevy_egui = { version = "0.31", default-features = false, features = ["default_fonts", "render"] }
 rand = "0.8"
+rand_xoshiro = "0.6"
