@@ -16,3 +16,4 @@ bevy_roll_safe = "0.5"
 bevy_egui = "0.34"
 rand = "0.9"
 getrandom = { version = "0.3", features = ["wasm_js"] }
+rand_xoshiro = "0.7"
