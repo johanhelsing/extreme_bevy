@@ -11,7 +11,8 @@ use bevy_roll_safe::prelude::*;
 use clap::Parser;
 use components::*;
 use input::*;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
+use rand_xoshiro::Xoshiro256PlusPlus;
 
 mod args;
 mod components;
@@ -190,6 +191,7 @@ fn spawn_players(
     mut commands: Commands,
     players: Query<Entity, With<Player>>,
     bullets: Query<Entity, With<Bullet>>,
+    scores: Res<Scores>,
 ) {
     info!("Spawning players");
 
@@ -201,7 +203,7 @@ fn spawn_players(
         commands.entity(bullet).despawn();
     }
 
-    let mut rng = rand::rng();
+    let mut rng = Xoshiro256PlusPlus::seed_from_u64((scores.0 + scores.1) as u64);
     let half = MAP_SIZE as f32 / 2.;
     let p1_pos = Vec2::new(rng.random_range(-half..half), rng.random_range(-half..half));
     let p2_pos = Vec2::new(rng.random_range(-half..half), rng.random_range(-half..half));
