@@ -53,6 +53,9 @@ impl Default for RoundEndTimer {
     }
 }
 
+#[derive(Resource, Default, Clone, Copy, Debug, Deref, DerefMut)]
+struct SessionSeed(u64);
+
 fn main() {
     let args = Args::parse();
     eprintln!("{args:?}");
@@ -199,6 +202,7 @@ fn spawn_players(
     players: Query<Entity, With<Player>>,
     bullets: Query<Entity, With<Bullet>>,
     scores: Res<Scores>,
+    session_seed: Res<SessionSeed>,
 ) {
     info!("Spawning players");
 
@@ -210,7 +214,7 @@ fn spawn_players(
         commands.entity(bullet).despawn_recursive();
     }
 
-    let mut rng = Xoshiro256PlusPlus::seed_from_u64((scores.0 + scores.1) as u64);
+    let mut rng = Xoshiro256PlusPlus::seed_from_u64((scores.0 + scores.1) as u64 ^ **session_seed);
     let half = MAP_SIZE as f32 / 2.;
     let p1_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
     let p2_pos = Vec2::new(rng.gen_range(-half..half), rng.gen_range(-half..half));
@@ -278,6 +282,15 @@ fn wait_for_players(
     }
 
     info!("All peers have joined, going in-game");
+
+    // determine the seed
+    let id = socket.id().expect("no peer id assigned").0.as_u64_pair();
+    let mut seed = id.0 ^ id.1;
+    for peer in socket.connected_peers() {
+        let peer_id = peer.0.as_u64_pair();
+        seed ^= peer_id.0 ^ peer_id.1;
+    }
+    commands.insert_resource(SessionSeed(seed));
 
     // create a GGRS P2P session
     let mut session_builder = ggrs::SessionBuilder::<Config>::new()
