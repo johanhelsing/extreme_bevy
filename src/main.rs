@@ -11,7 +11,7 @@ use bevy_roll_safe::prelude::*;
 use clap::Parser;
 use components::*;
 use input::*;
-use rand::{Rng, SeedableRng};
+use rand::{Rng, RngCore, SeedableRng, rng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
 mod args;
@@ -319,6 +319,7 @@ fn start_synctest_session(mut commands: Commands, mut next_state: ResMut<NextSta
         .expect("failed to start session");
 
     commands.insert_resource(bevy_ggrs::Session::SyncTest(ggrs_session));
+    commands.insert_resource(SessionSeed(rng().next_u64()));
     next_state.set(GameState::InGame);
 }
 
