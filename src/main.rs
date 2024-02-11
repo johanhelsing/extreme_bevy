@@ -130,6 +130,7 @@ fn main() {
                     .after(reload_bullet)
                     .after(resolve_wall_collisions),
                 move_bullet.after(fire_bullets),
+                bullet_wall_collisions.after(move_bullet),
                 kill_players.after(move_bullet).after(move_players),
             )
                 .run_if(in_state(RollbackState::InRound))
@@ -502,6 +503,29 @@ fn move_bullet(mut bullets: Query<(&mut Transform, &MoveDir), With<Bullet>>, tim
         let speed = 20.;
         let delta = dir.0 * speed * time.delta_secs();
         transform.translation += delta.extend(0.);
+    }
+}
+
+fn bullet_wall_collisions(
+    mut commands: Commands,
+    bullets: Query<(Entity, &Transform), With<Bullet>>,
+    walls: Query<(&Transform, &Sprite), (With<Wall>, Without<Bullet>)>,
+) {
+    for (bullet_entity, bullet_transform) in &bullets {
+        for (wall_transform, wall_sprite) in &walls {
+            let wall_size = wall_sprite.custom_size.expect("wall doesn't have a size");
+            let wall_pos = wall_transform.translation.xy();
+            let bullet_pos = bullet_transform.translation.xy();
+            let center_to_center = wall_pos - bullet_pos;
+            // exploit symmetry
+            let center_to_center = center_to_center.abs();
+            let corner_to_center = center_to_center - wall_size / 2.;
+            if corner_to_center.x < 0. && corner_to_center.y < 0. {
+                // we're inside a wall
+                commands.entity(bullet_entity).despawn();
+                break;
+            }
+        }
     }
 }
 
