@@ -90,6 +90,7 @@ fn main() {
         .rollback_component_with_copy::<Bullet>()
         .rollback_component_with_copy::<BulletReady>()
         .rollback_component_with_copy::<Player>()
+        .rollback_component_with_copy::<Wall>()
         .rollback_component_with_copy::<MoveDir>()
         .rollback_component_with_clone::<Sprite>()
         .rollback_component_with_clone::<GlobalTransform>()
@@ -118,7 +119,10 @@ fn main() {
             ),
         )
         .add_systems(ReadInputs, read_local_inputs)
-        .add_systems(OnEnter(RollbackState::InRound), spawn_players)
+        .add_systems(
+            OnEnter(RollbackState::InRound),
+            (generate_map, spawn_players.after(generate_map)),
+        )
         .add_systems(
             GgrsSchedule,
             (
@@ -196,6 +200,48 @@ fn setup(mut commands: Commands) {
     let mut camera_bundle = Camera2dBundle::default();
     camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(10.);
     commands.spawn(camera_bundle);
+}
+
+fn generate_map(
+    mut commands: Commands,
+    walls: Query<Entity, With<Wall>>,
+    scores: Res<Scores>,
+    session_seed: Res<SessionSeed>,
+) {
+    // despawn walls from previous round (if any)
+    for wall in &walls {
+        commands.entity(wall).despawn_recursive();
+    }
+
+    let mut rng = Xoshiro256PlusPlus::seed_from_u64((scores.0 + scores.1) as u64 ^ **session_seed);
+
+    for _ in 0..20 {
+        let max_box_size = MAP_SIZE / 4;
+        let width = rng.gen_range(1..max_box_size);
+        let height = rng.gen_range(1..max_box_size);
+
+        let cell_x = rng.gen_range(0..=(MAP_SIZE - width));
+        let cell_y = rng.gen_range(0..=(MAP_SIZE - height));
+
+        let size = Vec2::new(width as f32, height as f32);
+
+        commands.spawn((
+            Wall,
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0.27, 0.27, 0.27),
+                    custom_size: Some(size),
+                    ..default()
+                },
+                transform: Transform::from_translation(Vec3::new(
+                    cell_x as f32 + size.x / 2. - MAP_SIZE as f32 / 2.,
+                    cell_y as f32 + size.y / 2. - MAP_SIZE as f32 / 2.,
+                    10.,
+                )),
+                ..default()
+            },
+        ));
+    }
 }
 
 fn spawn_players(
