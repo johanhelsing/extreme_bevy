@@ -121,8 +121,12 @@ fn main() {
             GgrsSchedule,
             (
                 move_players,
+                resolve_wall_collisions.after(move_players),
                 reload_bullet,
-                fire_bullets.after(move_players).after(reload_bullet),
+                fire_bullets
+                    .after(move_players)
+                    .after(reload_bullet)
+                    .after(resolve_wall_collisions),
                 move_bullet.after(fire_bullets),
                 kill_players.after(move_bullet).after(move_players),
             )
@@ -414,6 +418,40 @@ fn move_players(
 
         transform.translation.x = new_pos.x;
         transform.translation.y = new_pos.y;
+    }
+}
+
+fn resolve_wall_collisions(
+    mut players: Query<&mut Transform, With<Player>>,
+    walls: Query<(&Transform, &Sprite), (With<Wall>, Without<Player>)>,
+) {
+    for mut player_transform in &mut players {
+        for (wall_transform, wall_sprite) in &walls {
+            let wall_size = wall_sprite.custom_size.expect("wall doesn't have a size");
+            let wall_pos = wall_transform.translation.xy();
+            let player_pos = player_transform.translation.xy();
+
+            let wall_to_player = player_pos - wall_pos;
+            // exploit the symmetry of the problem,
+            // treat things as if they are in the first quadrant
+            let wall_to_player_abs = wall_to_player.abs();
+            let wall_corner_to_player_center = wall_to_player_abs - wall_size / 2.;
+
+            let corner_to_corner = wall_corner_to_player_center - Vec2::splat(PLAYER_RADIUS);
+
+            if corner_to_corner.x > 0. || corner_to_corner.y > 0. {
+                // no collision
+                continue;
+            }
+
+            if corner_to_corner.x > corner_to_corner.y {
+                // least overlap on x axis
+                player_transform.translation.x -= wall_to_player.x.signum() * corner_to_corner.x;
+            } else {
+                // least overlap on y axis
+                player_transform.translation.y -= wall_to_player.y.signum() * corner_to_corner.y;
+            }
+        }
     }
 }
 
