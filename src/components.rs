@@ -16,6 +16,9 @@ pub struct Bullet;
 #[derive(Component, Clone, Copy)]
 pub struct MoveDir(pub Vec2);
 
+#[derive(Component, Clone, Copy)]
+pub struct Wall;
+
 pub fn checksum_transform(transform: &Transform) -> u64 {
     let mut hasher = checksum_hasher();
 
