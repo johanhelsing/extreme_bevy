@@ -532,11 +532,19 @@ fn bullet_wall_collisions(
     bullets: Query<(Entity, &Transform), With<Bullet>>,
     walls: Query<(&Transform, &Sprite), (With<Wall>, Without<Bullet>)>,
 ) {
+    let map_limit = MAP_SIZE as f32 / 2.;
+
     for (bullet_entity, bullet_transform) in &bullets {
+        let bullet_pos = bullet_transform.translation.xy();
+
+        if bullet_pos.x.abs() > map_limit || bullet_pos.y.abs() > map_limit {
+            commands.entity(bullet_entity).despawn_recursive();
+            continue;
+        }
+
         for (wall_transform, wall_sprite) in &walls {
             let wall_size = wall_sprite.custom_size.expect("wall doesn't have a size");
             let wall_pos = wall_transform.translation.xy();
-            let bullet_pos = bullet_transform.translation.xy();
             let center_to_center = wall_pos - bullet_pos;
             // exploit symmetry
             let center_to_center = center_to_center.abs();
