@@ -7,6 +7,8 @@ fn main() {
                 // fill the entire browser window
                 // TODO: re-enable in Bevy 0.14
                 // fit_canvas_to_parent: true,
+                // don't hijack keyboard shortcuts like F5, F6, F12, Ctrl+R etc.
+                prevent_default_event_handling: false,
                 ..default()
             }),
             ..default()
