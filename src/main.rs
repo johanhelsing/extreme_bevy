@@ -52,6 +52,7 @@ fn main() {
             GgrsPlugin::<Config>::default(),
         ))
         .rollback_component_with_clone::<Transform>()
+        .rollback_component_with_copy::<Bullet>()
         .rollback_component_with_copy::<BulletReady>()
         .rollback_component_with_copy::<Player>()
         .rollback_component_with_copy::<MoveDir>()
