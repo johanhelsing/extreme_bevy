@@ -10,7 +10,7 @@ pub struct Player {
 #[derive(Component, Clone, Copy)]
 pub struct BulletReady(pub bool);
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Bullet;
 
 #[derive(Component, Clone, Copy)]
