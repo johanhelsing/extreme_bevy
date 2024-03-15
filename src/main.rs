@@ -50,6 +50,7 @@ fn main() {
                 .continue_to_state(GameState::Matchmaking),
         )
         .rollback_component_with_clone::<Transform>()
+        .rollback_component_with_copy::<Bullet>()
         .rollback_component_with_copy::<BulletReady>()
         .rollback_component_with_copy::<Player>()
         .rollback_component_with_copy::<MoveDir>()
