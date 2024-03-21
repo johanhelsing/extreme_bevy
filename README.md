@@ -2,7 +2,7 @@
 
 Extreme Bevy is what you end up with by following my [tutorial series on how to make a low-latency p2p web game](https://helsing.studio/posts/extreme-bevy).
 
-There game can be played here: https://helsing.studio/extreme
+The game can be played here: https://helsing.studio/extreme
 
 It's a showcase on how to use the following together:
 
