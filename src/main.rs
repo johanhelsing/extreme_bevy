@@ -249,6 +249,7 @@ fn spawn_players(
     scores: Res<Scores>,
     session_seed: Res<SessionSeed>,
     images: Res<ImageAssets>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     info!("Spawning players");
 
@@ -265,6 +266,10 @@ fn spawn_players(
     let p1_pos = Vec2::new(rng.random_range(-half..half), rng.random_range(-half..half));
     let p2_pos = Vec2::new(rng.random_range(-half..half), rng.random_range(-half..half));
 
+    // 8 directional animations per player, up to 6 frames each
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(22), 6, 8, None, None);
+    let layout = texture_atlas_layouts.add(layout.clone());
+
     // Player 1
     commands
         .spawn((
@@ -274,6 +279,10 @@ fn spawn_players(
             MoveDir(-Vec2::X),
             Sprite {
                 image: images.player_1.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: layout.clone(),
+                    index: 0,
+                }),
                 custom_size: Some(Vec2::new(1., 1.)),
                 ..default()
             },
@@ -289,6 +298,10 @@ fn spawn_players(
             MoveDir(-Vec2::X),
             Sprite {
                 image: images.player_2.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: layout.clone(),
+                    index: 0,
+                }),
                 custom_size: Some(Vec2::new(1., 1.)),
                 ..default()
             },
