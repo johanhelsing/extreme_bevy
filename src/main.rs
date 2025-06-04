@@ -153,6 +153,10 @@ const GRID_WIDTH: f32 = 0.05;
 struct ImageAssets {
     #[asset(path = "bullet.png")]
     bullet: Handle<Image>,
+    #[asset(path = "player_1.png")]
+    player_1: Handle<Image>,
+    #[asset(path = "player_2.png")]
+    player_2: Handle<Image>,
 }
 
 fn synctest_mode(args: Res<Args>) -> bool {
@@ -244,6 +248,7 @@ fn spawn_players(
     bullets: Query<Entity, With<Bullet>>,
     scores: Res<Scores>,
     session_seed: Res<SessionSeed>,
+    images: Res<ImageAssets>,
 ) {
     info!("Spawning players");
 
@@ -268,7 +273,7 @@ fn spawn_players(
             BulletReady(true),
             MoveDir(-Vec2::X),
             Sprite {
-                color: Color::srgb(0., 0.47, 1.),
+                image: images.player_1.clone(),
                 custom_size: Some(Vec2::new(1., 1.)),
                 ..default()
             },
@@ -283,7 +288,7 @@ fn spawn_players(
             BulletReady(true),
             MoveDir(-Vec2::X),
             Sprite {
-                color: Color::srgb(0., 0.4, 0.),
+                image: images.player_2.clone(),
                 custom_size: Some(Vec2::new(1., 1.)),
                 ..default()
             },
