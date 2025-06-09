@@ -122,6 +122,7 @@ fn main() {
             RollbackUpdate,
             (
                 move_players,
+                update_player_sprites.after(move_players),
                 resolve_wall_collisions.after(move_players),
                 reload_bullet,
                 fire_bullets
@@ -631,4 +632,19 @@ fn update_score_ui(mut contexts: EguiContexts, scores: Res<Scores>) -> Result {
         });
 
     Ok(())
+}
+
+fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player>>) {
+    for (mut sprite, move_dir) in &mut players {
+        if let Some(atlas) = sprite.texture_atlas.as_mut() {
+            // todo: pick index based on move_dir
+            // for now simply cycle through indices for testing
+            atlas.index += atlas.index;
+
+            // wrap around when we reach the end of the atlas
+            if atlas.index >= 6 * 8 {
+                atlas.index = 0;
+            }
+        }
+    }
 }
