@@ -662,8 +662,21 @@ fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player
             // we get the current frame in the animation.
             let mut current_frame = atlas.index % 6;
 
-            // increase by one each frame, then wrap around after 6 frames
-            current_frame = (current_frame + 1) % 6;
+            // get animation length based on octant (row in the sprite sheet)
+            let anim_len = match octant {
+                0 => 5,
+                1 => 5,
+                2 => 4,
+                3 => 5,
+                4 => 5,
+                5 => 4,
+                6 => 4,
+                7 => 5,
+                _ => unreachable!(),
+            };
+
+            // increase by one each frame, then wrap around after animation completes
+            current_frame = (current_frame + 1) % anim_len;
 
             atlas.index = anim_start + current_frame;
         }
