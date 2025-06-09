@@ -676,7 +676,7 @@ fn update_player_sprites(
                 _ => unreachable!(),
             };
 
-            let anim_speed = 5.0; // frames per units of distance traveled
+            let anim_speed = 4.0; // frames per units of distance traveled
             let current_frame = (distance.0 * anim_speed) as usize % anim_len;
 
             atlas.index = anim_start + current_frame;
