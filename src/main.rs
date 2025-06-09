@@ -13,6 +13,7 @@ use components::*;
 use input::*;
 use rand::{Rng, RngCore, SeedableRng, rng};
 use rand_xoshiro::Xoshiro256PlusPlus;
+use std::f32::consts::PI;
 
 mod args;
 mod components;
@@ -642,14 +643,22 @@ fn update_score_ui(mut contexts: EguiContexts, scores: Res<Scores>) -> Result {
 fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player>>) {
     for (mut sprite, move_dir) in &mut players {
         if let Some(atlas) = sprite.texture_atlas.as_mut() {
-            // todo: pick index based on move_dir
-            // for now simply cycle through indices for testing
-            atlas.index += 1;
+            // 8 directional animations, each 45 degrees apart
 
-            // wrap around when we reach the end of the atlas
-            if atlas.index >= 6 * 8 {
-                atlas.index = 0;
-            }
+            // in radians, signed: 0 is right, PI/2 is up, -PI/2 is down
+            let angle = move_dir.0.to_angle();
+
+            // divide the angle by 45 degrees (PI/4) to get the octant
+            let octant = (angle / (PI / 4.)).round() as i32;
+
+            // convert to an octant index in the range [0, 7]
+            let octant = if octant < 0 { octant + 8 } else { octant } as usize;
+
+            // each row has 6 frames, so we multiply the octant index by 6
+            // to get the index of the first frame in that row in the texture atlas.
+            let anim_start = octant * 6;
+
+            atlas.index = anim_start;
         }
     }
 }
