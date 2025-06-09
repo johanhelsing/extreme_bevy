@@ -92,6 +92,7 @@ fn main() {
         .rollback_component_with_copy::<Player>()
         .rollback_component_with_copy::<Wall>()
         .rollback_component_with_copy::<MoveDir>()
+        .rollback_component_with_copy::<DistanceTraveled>()
         .rollback_component_with_clone::<Sprite>()
         .checksum_component::<Transform>(checksum_transform)
         .insert_resource(args)
@@ -420,11 +421,11 @@ fn handle_ggrs_events(mut session: ResMut<Session<Config>>) {
 }
 
 fn move_players(
-    mut players: Query<(&mut Transform, &mut MoveDir, &Player)>,
+    mut players: Query<(&mut Transform, &mut MoveDir, &mut DistanceTraveled, &Player)>,
     inputs: Res<PlayerInputs<Config>>,
     time: Res<Time>,
 ) {
-    for (mut transform, mut move_direction, player) in &mut players {
+    for (mut transform, mut move_direction, mut distance, player) in &mut players {
         let (input, _) = inputs[player.handle];
 
         let direction = direction(input);
@@ -444,6 +445,8 @@ fn move_players(
 
         transform.translation.x = new_pos.x;
         transform.translation.y = new_pos.y;
+
+        distance.0 += move_delta.length();
     }
 }
 
@@ -640,8 +643,10 @@ fn update_score_ui(mut contexts: EguiContexts, scores: Res<Scores>) -> Result {
     Ok(())
 }
 
-fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player>>) {
-    for (mut sprite, move_dir) in &mut players {
+fn update_player_sprites(
+    mut players: Query<(&mut Sprite, &MoveDir, &DistanceTraveled), With<Player>>,
+) {
+    for (mut sprite, move_dir, distance) in &mut players {
         if let Some(atlas) = sprite.texture_atlas.as_mut() {
             // 8 directional animations, each 45 degrees apart
 
@@ -658,10 +663,6 @@ fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player
             // to get the index of the first frame in that row in the texture atlas.
             let anim_start = octant * 6;
 
-            // each row is 6 frames, so by taking the current index modulo 6,
-            // we get the current frame in the animation.
-            let mut current_frame = atlas.index % 6;
-
             // get animation length based on octant (row in the sprite sheet)
             let anim_len = match octant {
                 0 => 5,
@@ -675,8 +676,8 @@ fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player
                 _ => unreachable!(),
             };
 
-            // increase by one each frame, then wrap around after animation completes
-            current_frame = (current_frame + 1) % anim_len;
+            let anim_speed = 5.0; // frames per units of distance traveled
+            let current_frame = (distance.0 * anim_speed) as usize % anim_len;
 
             atlas.index = anim_start + current_frame;
         }

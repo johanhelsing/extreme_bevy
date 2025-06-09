@@ -3,6 +3,7 @@ use bevy_ggrs::checksum_hasher;
 use std::hash::{Hash, Hasher};
 
 #[derive(Component, Clone, Copy)]
+#[require(DistanceTraveled)]
 pub struct Player {
     pub handle: usize,
 }
@@ -15,6 +16,9 @@ pub struct Bullet;
 
 #[derive(Component, Clone, Copy)]
 pub struct MoveDir(pub Vec2);
+
+#[derive(Component, Default, Clone, Copy)]
+pub struct DistanceTraveled(pub f32);
 
 #[derive(Component, Clone, Copy)]
 pub struct Wall;
