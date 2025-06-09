@@ -436,7 +436,7 @@ fn move_players(
 
         move_direction.0 = direction;
 
-        let move_speed = 7.;
+        let move_speed = 6.;
         let move_delta = direction * move_speed * time.delta_secs();
 
         let old_pos = transform.translation.xy();
