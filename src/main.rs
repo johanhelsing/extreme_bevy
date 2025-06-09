@@ -122,7 +122,12 @@ fn main() {
             RollbackUpdate,
             (
                 move_players,
-                update_player_sprites.after(move_players),
+                update_player_sprites
+                    .after(move_players)
+                    // both systems operate on the `Sprite` component, but not on the same entities
+                    .ambiguous_with(resolve_wall_collisions)
+                    // both systems operate on the `Sprite` component, but not on the same entities
+                    .ambiguous_with(bullet_wall_collisions),
                 resolve_wall_collisions.after(move_players),
                 reload_bullet,
                 fire_bullets
@@ -639,7 +644,7 @@ fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player
         if let Some(atlas) = sprite.texture_atlas.as_mut() {
             // todo: pick index based on move_dir
             // for now simply cycle through indices for testing
-            atlas.index += atlas.index;
+            atlas.index += 1;
 
             // wrap around when we reach the end of the atlas
             if atlas.index >= 6 * 8 {
