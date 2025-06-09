@@ -290,7 +290,7 @@ fn spawn_players(
                     layout: layout.clone(),
                     index: 0,
                 }),
-                custom_size: Some(Vec2::new(1., 1.)),
+                custom_size: Some(Vec2::splat(1.4)),
                 ..default()
             },
         ))
@@ -309,7 +309,7 @@ fn spawn_players(
                     layout: layout.clone(),
                     index: 0,
                 }),
-                custom_size: Some(Vec2::new(1., 1.)),
+                custom_size: Some(Vec2::splat(1.4)),
                 ..default()
             },
         ))
