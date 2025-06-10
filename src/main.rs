@@ -566,6 +566,8 @@ fn bullet_wall_collisions(
     }
 }
 
+const PLAYER_WIDTH: f32 = 0.5;
+const PLAYER_HEIGHT: f32 = 1.0;
 const PLAYER_RADIUS: f32 = 0.5;
 const BULLET_RADIUS: f32 = 0.025;
 
@@ -578,11 +580,15 @@ fn kill_players(
 ) {
     for (player_entity, player_transform, player) in &players {
         for bullet_transform in &bullets {
-            let distance = Vec2::distance(
-                player_transform.translation.xy(),
-                bullet_transform.translation.xy(),
-            );
-            if distance < PLAYER_RADIUS + BULLET_RADIUS {
+            let player_pos = player_transform.translation.xy();
+            let bullet_pos = bullet_transform.translation.xy();
+
+            // distance between player center and bullet center on each axis, individually
+            let manhattan_distance = (player_pos - bullet_pos).abs();
+
+            if manhattan_distance.x < PLAYER_WIDTH / 2. + BULLET_RADIUS
+                && manhattan_distance.y < PLAYER_HEIGHT / 2. + BULLET_RADIUS
+            {
                 commands.entity(player_entity).despawn();
                 next_state.set(RollbackState::RoundEnd);
 
