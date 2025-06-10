@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use bevy_ggrs::checksum_hasher;
-use std::hash::{Hash, Hasher};
+use std::{
+    f32::consts::PI,
+    hash::{Hash, Hasher},
+};
 
 #[derive(Component, Clone, Copy)]
 #[require(DistanceTraveled)]
@@ -16,6 +19,22 @@ pub struct Bullet;
 
 #[derive(Component, Clone, Copy)]
 pub struct MoveDir(pub Vec2);
+
+impl MoveDir {
+    /// Gets the index of the octant (45 degree sectors), starting from 0 (right) and going counter-clockwise:
+    pub fn octant(&self) -> usize {
+        // in radians, signed: 0 is right, PI/2 is up, -PI/2 is down
+        let angle = self.0.to_angle();
+
+        // divide the angle by 45 degrees (PI/4) to get the octant
+        let octant = (angle / (PI / 4.)).round() as i32;
+
+        // convert to an octant index in the range [0, 7]
+        let octant = if octant < 0 { octant + 8 } else { octant } as usize;
+
+        octant
+    }
+}
 
 #[derive(Component, Default, Clone, Copy)]
 pub struct DistanceTraveled(pub f32);
