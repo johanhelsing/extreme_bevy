@@ -507,7 +507,18 @@ fn fire_bullets(
         let (input, _) = inputs[player.handle];
         if fire(input) && bullet_ready.0 {
             let player_pos = transform.translation.xy();
-            let pos = player_pos + move_dir.0 * PLAYER_RADIUS + BULLET_RADIUS;
+            let muzzle_offset = match move_dir.octant() {
+                0 => Vec2::new(0.5, 0.0),    // right
+                1 => Vec2::new(0.5, 0.25),   // up-right
+                2 => Vec2::new(0.25, 0.5),   // up
+                3 => Vec2::new(-0.4, 0.3),   // up-left
+                4 => Vec2::new(-0.5, 0.0),   // left
+                5 => Vec2::new(-0.4, -0.25), // down-left
+                6 => Vec2::new(-0.25, -0.5), // down
+                7 => Vec2::new(0.25, -0.25), // down-right
+                _ => unreachable!(),
+            };
+            let pos = player_pos + muzzle_offset;
             commands
                 .spawn((
                     Bullet,
