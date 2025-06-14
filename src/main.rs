@@ -515,6 +515,7 @@ fn fire_bullets(
     mut commands: Commands,
     inputs: Res<PlayerInputs<Config>>,
     images: Res<ImageAssets>,
+    sounds: Res<SoundAssets>,
     mut players: Query<(&Transform, &Player, &mut BulletReady, &MoveDir)>,
 ) {
     for (transform, player, mut bullet_ready, move_dir) in &mut players {
@@ -546,6 +547,12 @@ fn fire_bullets(
                     },
                 ))
                 .add_rollback();
+
+            commands.spawn((
+                AudioPlayer::new(sounds.gunshot.clone()),
+                PlaybackSettings::DESPAWN,
+            ));
+
             bullet_ready.0 = false;
         }
     }
