@@ -83,6 +83,7 @@ fn main() {
         .add_loading_state(
             LoadingState::new(GameState::AssetLoading)
                 .load_collection::<ImageAssets>()
+                .load_collection::<SoundAssets>()
                 .continue_to_state(GameState::Matchmaking),
         )
         .init_ggrs_state::<RollbackState>()
@@ -166,6 +167,18 @@ struct ImageAssets {
     player_1: Handle<Image>,
     #[asset(path = "player_2.png")]
     player_2: Handle<Image>,
+}
+
+#[derive(AssetCollection, Resource)]
+struct SoundAssets {
+    #[asset(path = "gunshot.ogg")]
+    gunshot: Handle<AudioSource>,
+    #[asset(path = "bullet_wall.ogg")]
+    bullet_wall: Handle<AudioSource>,
+    #[asset(path = "bullet_player.ogg")]
+    bullet_player: Handle<AudioSource>,
+    #[asset(path = "player_death.ogg")]
+    player_death: Handle<AudioSource>,
 }
 
 fn synctest_mode(args: Res<Args>) -> bool {
