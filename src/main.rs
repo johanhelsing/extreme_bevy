@@ -548,10 +548,12 @@ fn fire_bullets(
                 ))
                 .add_rollback();
 
-            commands.spawn((
-                AudioPlayer::new(sounds.gunshot.clone()),
-                PlaybackSettings::DESPAWN,
-            ));
+            commands
+                .spawn((
+                    AudioPlayer::new(sounds.gunshot.clone()),
+                    PlaybackSettings::DESPAWN,
+                ))
+                .add_rollback();
 
             bullet_ready.0 = false;
         }
