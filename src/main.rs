@@ -658,7 +658,14 @@ fn update_player_sprites(mut players: Query<(&mut Sprite, &MoveDir), With<Player
             // to get the index of the first frame in that row in the texture atlas.
             let anim_start = octant * 6;
 
-            atlas.index = anim_start;
+            // each row is 6 frames, so by taking the current index modulo 6,
+            // we get the current frame in the animation.
+            let mut current_frame = atlas.index % 6;
+
+            // increase by one each frame, then wrap around after 6 frames
+            current_frame = (current_frame + 1) % 6;
+
+            atlas.index = anim_start + current_frame;
         }
     }
 }
