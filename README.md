@@ -16,4 +16,4 @@ I intend to keep the git history of this repo as clean as possible. That means t
 
 ## License
 
-This project is licensed under [CC0 1.0 Universal](LICENSE). I'd be happy to hear if you found it useful or made anything with it, though! [@johanhelsing@mastodon.social](https://mastodon.social/@johanhelsing).
+This project is licensed under [CC0 1.0 Universal](LICENSE). I'd be happy to hear if you found it useful or made anything with it, though! [@johanhelsing.bsky.social](https://bsky.app/profile/johanhelsing.bsky.social).
