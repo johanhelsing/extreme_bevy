@@ -7,7 +7,7 @@ use bevy_egui::{
 };
 use bevy_ggrs::{ggrs::DesyncDetection, prelude::*, *};
 use bevy_matchbox::prelude::*;
-use bevy_roll_safe::prelude::*;
+use bevy_roll_safe::{RollbackAudioPlayer, RollbackAudioPlugin, prelude::*};
 use clap::Parser;
 use components::*;
 use input::*;
@@ -75,6 +75,8 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
             GgrsPlugin::<Config>::default(),
+            RollbackSchedulePlugin::new_ggrs(),
+            RollbackAudioPlugin,
             EguiPlugin {
                 enable_multipass_for_primary_context: true,
             },
@@ -124,7 +126,7 @@ fn main() {
             (generate_map, spawn_players.after(generate_map)),
         )
         .add_systems(
-            GgrsSchedule,
+            RollbackUpdate,
             (
                 move_players,
                 update_player_sprites
@@ -147,11 +149,10 @@ fn main() {
                 .after(bevy_roll_safe::apply_state_transition::<RollbackState>),
         )
         .add_systems(
-            GgrsSchedule,
+            RollbackUpdate,
             round_end_timeout
                 .run_if(in_state(RollbackState::RoundEnd))
-                .ambiguous_with(kill_players)
-                .after(bevy_roll_safe::apply_state_transition::<RollbackState>),
+                .ambiguous_with(kill_players),
         )
         .run();
 }
@@ -171,7 +172,8 @@ struct ImageAssets {
 
 #[derive(AssetCollection, Resource)]
 struct SoundAssets {
-    #[asset(path = "gunshot.ogg")]
+    // #[asset(path = "gunshot.ogg")]
+    #[asset(path = "gunshot.wav")]
     gunshot: Handle<AudioSource>,
     #[asset(path = "bullet_wall.ogg")]
     bullet_wall: Handle<AudioSource>,
@@ -548,12 +550,10 @@ fn fire_bullets(
                 ))
                 .add_rollback();
 
-            commands
-                .spawn((
-                    AudioPlayer::new(sounds.gunshot.clone()),
-                    PlaybackSettings::DESPAWN,
-                ))
-                .add_rollback();
+            commands.spawn((
+                RollbackAudioPlayer::from(AudioPlayer::new(sounds.gunshot.clone())),
+                PlaybackSettings::DESPAWN,
+            ));
 
             bullet_ready.0 = false;
         }

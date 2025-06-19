@@ -7,12 +7,12 @@ edition = "2024"
 opt-level = 2
 
 [dependencies]
-bevy = "0.16"
+bevy = { version = "0.16", features = ["wav"] }
 bevy_ggrs = { version = "0.18", features = ["wasm-bindgen"] }
 bevy_matchbox = { version = "0.12", features = ["ggrs"] }
 bevy_asset_loader = "0.23"
 clap = { version = "4.5", features = ["derive"] }
-bevy_roll_safe = "0.5"
+bevy_roll_safe = { path = "../bevy_roll_safe" }
 bevy_egui = "0.34"
 rand = "0.9"
 getrandom = { version = "0.3", features = ["wasm_js"] }
