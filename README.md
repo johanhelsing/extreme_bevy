@@ -17,3 +17,5 @@ I intend to keep the git history of this repo as clean as possible. That means t
 ## License
 
 This project is licensed under [CC0 1.0 Universal](LICENSE). I'd be happy to hear if you found it useful or made anything with it, though! [@johanhelsing.bsky.social](https://bsky.app/profile/johanhelsing.bsky.social).
+
+Except for the sprites, which are copied by hand from the original Extreme Violence. Simon Green has given permission to make a tribute game based on the original game, but I haven't yet clarified if he's ok with it being released as CC0.
