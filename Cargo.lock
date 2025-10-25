@@ -3052,6 +3052,8 @@ dependencies = [
  "bevy_matchbox",
  "bevy_roll_safe",
  "clap",
+ "getrandom 0.3.4",
+ "rand 0.9.2",
 ]
 
 [[package]]
